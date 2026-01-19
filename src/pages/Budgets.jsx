@@ -11,6 +11,10 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 import { useCategories, useTransactions, useBudgets, useAppSettings, filterTransactionsByPeriod, convertCurrency, useLiveRates } from '@/components/finance/useFinanceData';
 import { formatMoney } from '@/components/finance/constants';
@@ -27,6 +31,7 @@ export default function Budgets() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingBudget, setEditingBudget] = useState(null);
     const [viewDate, setViewDate] = useState(new Date());
+    const [deleteId, setDeleteId] = useState(null);
 
     const getPeriodRange = (budget) => {
         switch (budget.period) {
@@ -90,9 +95,16 @@ export default function Budgets() {
         setFormOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        await deleteBudget.mutateAsync(id);
-        toast.success('Бюджет удалён');
+    const handleDelete = (id) => {
+        setDeleteId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteId) {
+            await deleteBudget.mutateAsync(deleteId);
+            toast.success('Бюджет удалён');
+            setDeleteId(null);
+        }
     };
 
     const navigatePeriod = (direction) => {
@@ -211,6 +223,21 @@ export default function Budgets() {
                 onSubmit={handleCreateBudget}
                 initialData={editingBudget}
             />
+
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Удалить бюджет?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Это действие нельзя отменить. Все связанные с бюджетом данные будут утеряны.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

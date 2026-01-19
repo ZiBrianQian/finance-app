@@ -3,6 +3,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 import { useRecurringRules, useCategories, useAccounts, useAppSettings } from '@/components/finance/useFinanceData';
 import RecurringRuleForm from '@/components/finance/RecurringRuleForm';
@@ -16,6 +20,7 @@ export default function Recurring() {
 
     const [formOpen, setFormOpen] = useState(false);
     const [editingRule, setEditingRule] = useState(null);
+    const [deleteId, setDeleteId] = useState(null);
 
     const handleSubmit = async (data) => {
         if (editingRule) {
@@ -33,9 +38,16 @@ export default function Recurring() {
         setFormOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        await deleteRule.mutateAsync(id);
-        toast.success('Правило удалено');
+    const handleDelete = (id) => {
+        setDeleteId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteId) {
+            await deleteRule.mutateAsync(deleteId);
+            toast.success('Правило удалено');
+            setDeleteId(null);
+        }
     };
 
     const handleToggle = async (rule) => {
@@ -144,6 +156,21 @@ export default function Recurring() {
                 initialData={editingRule}
                 defaultCurrency={settings?.defaultCurrency || 'USD'}
             />
+
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Удалить правило?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Это действие нельзя отменить. Правило будет удалено безвозвратно.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

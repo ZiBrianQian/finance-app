@@ -6,6 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, Filter, X, Trash2, Tag, LayoutList, LayoutGrid } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 import { useAccounts, useCategories, useTransactions, useAppSettings, usePeriod, filterTransactionsByPeriod } from '@/components/finance/useFinanceData';
 import PeriodSelector from '@/components/finance/PeriodSelector';
@@ -28,6 +32,8 @@ export default function Transactions() {
     const [groupBy, setGroupBy] = useState('date');
     const [selectedIds, setSelectedIds] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
+    const [deleteId, setDeleteId] = useState(null);
+    const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -88,17 +94,16 @@ export default function Transactions() {
         setTxFormOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        await deleteTransaction.mutateAsync(id);
-        toast('Транзакция удалена', {
-            action: {
-                label: 'Отменить',
-                onClick: () => {
-                    const tx = transactions.find(t => t.id === id);
-                    if (tx) createTransaction.mutateAsync(tx);
-                }
-            }
-        });
+    const handleDelete = (id) => {
+        setDeleteId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteId) {
+            await deleteTransaction.mutateAsync(deleteId);
+            toast.success('Транзакция удалена');
+            setDeleteId(null);
+        }
     };
 
     const handleSelectChange = (id, checked) => {
@@ -109,11 +114,16 @@ export default function Transactions() {
         }
     };
 
-    const handleBulkDelete = async () => {
+    const handleBulkDelete = () => {
         if (selectedIds.length === 0) return;
+        setConfirmBulkDelete(true);
+    };
+
+    const proceedBulkDelete = async () => {
         await bulkDelete.mutateAsync(selectedIds);
         setSelectedIds([]);
-        toast.success(`Удалено ${selectedIds.length} транзакций`);
+        setConfirmBulkDelete(false);
+        toast.success(`Удалено транзакций: ${selectedIds.length}`);
     };
 
     const handleBulkCategoryChange = async (categoryId) => {
@@ -299,6 +309,36 @@ export default function Transactions() {
                 initialData={editingTx}
                 defaultCurrency={settings?.defaultCurrency || 'USD'}
             />
+
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Удалить транзакцию?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Это действие нельзя отменить. Транзакция будет удалена из истории.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Удалить выбранные транзакции?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Вы собираетесь удалить {selectedIds.length} транзакций. Это действие нельзя отменить.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogAction onClick={proceedBulkDelete} className="bg-red-600 hover:bg-red-700">Удалить всё</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

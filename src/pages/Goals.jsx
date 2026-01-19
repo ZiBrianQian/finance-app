@@ -12,6 +12,10 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 import { useGoals, useAccounts, useAppSettings, convertCurrency } from '@/components/finance/useFinanceData';
 import { formatMoney, parseMoney } from '@/components/finance/constants';
@@ -28,6 +32,7 @@ export default function Goals() {
     const [addFundsOpen, setAddFundsOpen] = useState(false);
     const [selectedGoal, setSelectedGoal] = useState(null);
     const [addAmount, setAddAmount] = useState('');
+    const [deleteId, setDeleteId] = useState(null);
 
     const activeGoals = useMemo(() => goals.filter(g => !g.isCompleted), [goals]);
     const completedGoals = useMemo(() => goals.filter(g => g.isCompleted), [goals]);
@@ -48,9 +53,16 @@ export default function Goals() {
         setFormOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        await deleteGoal.mutateAsync(id);
-        toast.success('Цель удалена');
+    const handleDelete = (id) => {
+        setDeleteId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteId) {
+            await deleteGoal.mutateAsync(deleteId);
+            toast.success('Цель удалена');
+            setDeleteId(null);
+        }
     };
 
     const handleMarkComplete = async (goal) => {
@@ -241,6 +253,21 @@ export default function Goals() {
                     )}
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Удалить цель?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Вы уверены, что хотите удалить эту финансовую цель? Данное действие нельзя отменить.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

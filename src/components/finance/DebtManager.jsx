@@ -10,12 +10,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function DebtManager() {
     const { debts, createDebt, updateDebt, deleteDebt } = useDebts();
     const { settings } = useAppSettings();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingDebt, setEditingDebt] = useState(null);
+    const [deleteId, setDeleteId] = useState(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -74,6 +79,17 @@ export default function DebtManager() {
             id: debt.id,
             data: { isPaid: !debt.isPaid }
         });
+    };
+
+    const handleDelete = (id) => {
+        setDeleteId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (deleteId) {
+            await deleteDebt.mutateAsync(deleteId);
+            setDeleteId(null);
+        }
     };
 
     // Derived stats
@@ -220,7 +236,7 @@ export default function DebtManager() {
                                 debt={debt}
                                 onEdit={handleEdit}
                                 onTogglePaid={togglePaidStatus}
-                                onDelete={deleteDebt.mutateAsync}
+                                onDelete={handleDelete}
                                 currency={settings?.defaultCurrency}
                             />
                         ))
@@ -240,13 +256,28 @@ export default function DebtManager() {
                                 debt={debt}
                                 onEdit={handleEdit}
                                 onTogglePaid={togglePaidStatus}
-                                onDelete={deleteDebt.mutateAsync}
+                                onDelete={handleDelete}
                                 currency={settings?.defaultCurrency}
                             />
                         ))
                     )}
                 </TabsContent>
             </Tabs>
+
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Удалить запись о долге?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Вы уверены, что хотите удалить эту запись? История платежей будет утеряна.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
