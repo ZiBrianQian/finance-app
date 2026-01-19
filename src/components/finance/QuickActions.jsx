@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, TableProperties } from 'lucide-react';
 
-export default function QuickActions({ onAddExpense, onAddIncome, onAddTransfer }) {
+export default function QuickActions({ onAddExpense, onAddIncome, onAddTransfer, onAddBatch }) {
     return (
         <div className="flex gap-2">
             <Button
@@ -27,6 +27,16 @@ export default function QuickActions({ onAddExpense, onAddIncome, onAddTransfer 
                 <ArrowLeftRight className="w-4 h-4" />
                 <span className="hidden sm:inline">Перевод</span>
             </Button>
+            {onAddBatch && (
+                <Button
+                    onClick={onAddBatch}
+                    variant="outline"
+                    className="border-purple-200 text-purple-600 hover:bg-purple-50 gap-2 rounded-xl"
+                >
+                    <TableProperties className="w-4 h-4" />
+                    <span className="hidden sm:inline">Несколько</span>
+                </Button>
+            )}
         </div>
     );
 }

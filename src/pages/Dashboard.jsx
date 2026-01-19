@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownLeft, Bell, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownLeft, Bell, AlertTriangle, X } from 'lucide-react';
 import { format, eachDayOfInterval, parseISO, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 import {
     useAccounts, useCategories, useTransactions, useBudgets, useAppSettings, useRecurringRules,
@@ -19,6 +21,8 @@ import QuickActions from '@/components/finance/QuickActions';
 import TransactionForm from '@/components/finance/TransactionForm';
 import OnboardingModal from '@/components/finance/OnboardingModal';
 import { BalanceLineChart, CategoryPieChart } from '@/components/finance/Charts';
+import CategoryIcon from '@/components/finance/CategoryIcon';
+import BatchTransactionForm from '@/components/finance/BatchTransactionForm';
 
 export default function Dashboard() {
     const { accounts, createAccount } = useAccounts();
@@ -33,6 +37,8 @@ export default function Dashboard() {
     const [txFormOpen, setTxFormOpen] = useState(false);
     const [txFormType, setTxFormType] = useState('expense');
     const [showOnboarding, setShowOnboarding] = useState(false);
+    const [txListType, setTxListType] = useState(null); // 'income' or 'expense'
+    const [batchFormOpen, setBatchFormOpen] = useState(false);
 
     useEffect(() => {
         if (!settingsLoading && !settings?.onboardingCompleted && accounts.length === 0) {
@@ -219,6 +225,7 @@ export default function Dashboard() {
                             onAddExpense={() => handleOpenTxForm('expense')}
                             onAddIncome={() => handleOpenTxForm('income')}
                             onAddTransfer={() => handleOpenTxForm('transfer')}
+                            onAddBatch={() => setBatchFormOpen(true)}
                         />
                     </div>
                 </div>
@@ -264,6 +271,7 @@ export default function Dashboard() {
                         comparison={incomeComparison}
                         type="income"
                         icon={ArrowDownLeft}
+                        onClick={() => setTxListType('income')}
                     />
                     <StatsCard
                         title="Расходы"
@@ -272,6 +280,7 @@ export default function Dashboard() {
                         comparison={expenseComparison}
                         type="expense"
                         icon={ArrowUpRight}
+                        onClick={() => setTxListType('expense')}
                     />
                     <StatsCard
                         title="Чистый итог"
@@ -298,17 +307,7 @@ export default function Dashboard() {
                             )}
                         </Card>
 
-                        {/* Category expenses */}
-                        <Card className="p-6 bg-card border-border">
-                            <h3 className="text-lg font-semibold text-foreground mb-4">Расходы по категориям</h3>
-                            {categoryExpenses.length > 0 ? (
-                                <CategoryPieChart data={categoryExpenses} currency={settings?.defaultCurrency || 'USD'} />
-                            ) : (
-                                <div className="h-[250px] flex items-center justify-center text-muted-foreground">
-                                    Нет расходов за выбранный период
-                                </div>
-                            )}
-                        </Card>
+
                     </div>
 
                     {/* Right column */}
@@ -389,6 +388,73 @@ export default function Dashboard() {
                 onCreateCategories={handleCreateCategories}
                 settings={settings}
                 updateSettings={updateSettings}
+            />
+
+            {/* Transaction List Dialog */}
+            <Dialog open={!!txListType} onOpenChange={(open) => !open && setTxListType(null)}>
+                <DialogContent className="max-w-lg max-h-[80vh]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            {txListType === 'income' ? (
+                                <>
+                                    <ArrowDownLeft className="w-5 h-5 text-green-600" />
+                                    Доходы за период
+                                </>
+                            ) : (
+                                <>
+                                    <ArrowUpRight className="w-5 h-5 text-red-600" />
+                                    Расходы за период
+                                </>
+                            )}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <ScrollArea className="h-[60vh] pr-4">
+                        <div className="space-y-2">
+                            {filterTransactionsByPeriod(transactions, start, end)
+                                .filter(tx => tx.type === txListType)
+                                .sort((a, b) => b.date.localeCompare(a.date))
+                                .map(tx => {
+                                    const cat = categories.find(c => c.id === tx.categoryId);
+                                    const acc = accounts.find(a => a.id === tx.accountId);
+                                    return (
+                                        <div key={tx.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border hover:bg-accent/50 transition-colors">
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                                style={{ backgroundColor: cat?.color ? `${cat.color}15` : 'var(--muted)' }}
+                                            >
+                                                <CategoryIcon icon={cat?.icon} color={cat?.color} size={20} className="w-10 h-10" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm text-foreground truncate">
+                                                    {tx.merchant || cat?.name || 'Без категории'}
+                                                </p>
+                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                    <span>{format(parseISO(tx.date), 'd MMM', { locale: ru })}</span>
+                                                    {acc && <><span>•</span><span>{acc.name}</span></>}
+                                                </div>
+                                            </div>
+                                            <span className={`font-semibold text-sm shrink-0 ${txListType === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                                                {txListType === 'income' ? '+' : '-'}{formatMoney(tx.amount, tx.currency)}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            {filterTransactionsByPeriod(transactions, start, end).filter(tx => tx.type === txListType).length === 0 && (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    <p>Нет {txListType === 'income' ? 'доходов' : 'расходов'} за этот период</p>
+                                </div>
+                            )}
+                        </div>
+                    </ScrollArea>
+                </DialogContent>
+            </Dialog>
+
+            <BatchTransactionForm
+                open={batchFormOpen}
+                onOpenChange={setBatchFormOpen}
+                accounts={accounts}
+                categories={categories}
+                onSubmit={handleCreateTransaction}
+                defaultCurrency={settings?.defaultCurrency || 'USD'}
             />
         </div>
     );

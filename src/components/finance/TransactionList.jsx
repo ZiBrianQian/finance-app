@@ -3,6 +3,7 @@ import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { formatMoney, CURRENCIES } from './constants';
+import { useLiveRates, convertCurrency, useAppSettings } from './useFinanceData';
 import CategoryIcon from './CategoryIcon';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -38,6 +39,7 @@ export default function TransactionList({
     showCheckbox = false,
     settings = null
 }) {
+    const { rates } = useLiveRates(settings?.defaultCurrency);
     const getCategory = (id) => categories.find(c => c.id === id);
     const getAccount = (id) => accounts.find(a => a.id === id);
 
@@ -74,8 +76,9 @@ export default function TransactionList({
                     : getCategory(group)?.name || 'Без категории';
 
                 const groupTotal = txs.reduce((sum, tx) => {
-                    if (tx.type === 'income') return sum + tx.amount;
-                    if (tx.type === 'expense') return sum - tx.amount;
+                    const converted = convertCurrency(tx.amount, tx.currency || settings?.defaultCurrency || 'USD', settings?.defaultCurrency || 'USD', rates);
+                    if (tx.type === 'income') return sum + converted;
+                    if (tx.type === 'expense') return sum - converted;
                     return sum;
                 }, 0);
 
@@ -84,7 +87,7 @@ export default function TransactionList({
                         <div className="flex items-center justify-between mb-3 px-1">
                             <h3 className="text-sm font-medium text-muted-foreground">{groupLabel}</h3>
                             <span className={`text-sm font-medium ${groupTotal >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                {groupTotal > 0 ? '+' : ''}{formatMoney(groupTotal, txs[0]?.currency)}
+                                {groupTotal > 0 ? '+' : ''}{formatMoney(groupTotal, settings?.defaultCurrency)}
                             </span>
                         </div>
                         <div className="space-y-2">

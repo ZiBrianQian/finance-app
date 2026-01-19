@@ -104,7 +104,7 @@ function createWindow() {
 
     // Load the app
     if (isDev) {
-        mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173');
+        mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL || 'http://127.0.0.1:5173');
         // Open DevTools in development
         mainWindow.webContents.openDevTools();
     } else {

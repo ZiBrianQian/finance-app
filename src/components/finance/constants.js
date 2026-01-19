@@ -48,6 +48,7 @@ export const PERIOD_PRESETS = [
     { value: 'month', label: 'Месяц' },
     { value: 'quarter', label: 'Квартал' },
     { value: 'year', label: 'Год' },
+    { value: 'all', label: 'Всё время' },
     { value: 'custom', label: 'Период' },
 ];
 

@@ -23,6 +23,8 @@ export const usePeriod = (defaultPeriod = 'month') => {
                 return { start: quarterStart, end: endOfMonth(today) };
             case 'year':
                 return { start: startOfYear(today), end: endOfYear(today) };
+            case 'all':
+                return { start: new Date(2000, 0, 1), end: endOfYear(today) };
             case 'custom':
                 return { start: customRange.start || today, end: customRange.end || today };
             default:

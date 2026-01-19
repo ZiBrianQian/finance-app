@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
 import { formatMoney } from './constants';
 import CategoryIcon from './CategoryIcon';
 
-export default function BudgetCard({ rule, category, spent, currency, daysLeft, totalDays }) {
+export default function BudgetCard({ rule, category, spent, currency, daysLeft, totalDays, onClick }) {
     const limit = rule.limitAmount;
     const percentage = limit > 0 ? Math.round((spent / limit) * 100) : 0;
     const remaining = limit - spent;
@@ -15,9 +15,13 @@ export default function BudgetCard({ rule, category, spent, currency, daysLeft, 
     const dailyPace = totalDays > 0 ? spent / (totalDays - daysLeft || 1) : 0;
     const projectedSpend = dailyPace * totalDays;
     const willExceed = projectedSpend > limit;
+    const isClickable = !!onClick;
 
     return (
-        <Card className="p-4 bg-card border-border">
+        <Card
+            className={`p-4 bg-card border-border ${isClickable ? 'cursor-pointer hover:border-primary/50 hover:shadow-md transition-all' : ''}`}
+            onClick={onClick}
+        >
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                     {category && (

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useTransactions, useRecurringRules, useAppSettings } from './useFinanceData';
+import { useTransactions, useRecurringRules, useAppSettings, useLiveRates, convertCurrency, useCategories, useAccounts } from './useFinanceData';
+import TransactionForm from './TransactionForm';
+import BatchTransactionForm from './BatchTransactionForm';
 import {
     format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
     eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths,
     isToday, parseISO
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Clock, Calendar as CalendarIcon, Plus, TableProperties } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
@@ -16,9 +18,17 @@ export default function FinancialCalendar() {
     const { settings } = useAppSettings();
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [txFormOpen, setTxFormOpen] = useState(false);
+    const [txFormType, setTxFormType] = useState('expense');
+    const [batchFormOpen, setBatchFormOpen] = useState(false);
 
-    const { transactions } = useTransactions();
+    const { transactions, createTransaction } = useTransactions();
     const { rules } = useRecurringRules();
+    const { rates } = useLiveRates(settings?.defaultCurrency);
+    const { categories } = useCategories();
+    const { accounts } = useAccounts();
+
+    const getCategory = (id) => categories.find(c => c.id === id);
 
     const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
     const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
@@ -40,11 +50,11 @@ export default function FinancialCalendar() {
 
         const income = dayTransactions
             .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
+            .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || settings?.defaultCurrency || 'USD', settings?.defaultCurrency || 'USD', rates), 0);
 
         const expense = dayTransactions
             .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
+            .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || settings?.defaultCurrency || 'USD', settings?.defaultCurrency || 'USD', rates), 0);
 
         const projected = rules.filter(rule => {
             if (!rule.isActive) return false;
@@ -140,21 +150,52 @@ export default function FinancialCalendar() {
 
             <Card className="w-full lg:w-96 flex flex-col h-full overflow-hidden border-l border-border bg-card/50 backdrop-blur-sm">
                 <CardHeader className="border-b bg-card">
-                    <CardTitle className="flex items-center gap-2">
-                        <CalendarIcon className="w-5 h-5 text-primary" />
-                        {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <CalendarIcon className="w-5 h-5 text-primary" />
+                            {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setBatchFormOpen(true)}
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            title="Добавить несколько"
+                        >
+                            <TableProperties className="w-5 h-5" />
+                        </Button>
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-y-auto p-4 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                            <p className="text-xs text-muted-foreground mb-1">Доходы</p>
+                        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 relative group">
+                            <div className="flex justify-between items-start">
+                                <p className="text-xs text-muted-foreground mb-1">Доходы</p>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-700 -mt-1 -mr-1"
+                                    onClick={() => { setTxFormType('income'); setTxFormOpen(true); }}
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </Button>
+                            </div>
                             <p className="text-lg font-bold text-emerald-600">
                                 +{formatCurrency(selectedDayData.income, settings?.defaultCurrency)}
                             </p>
                         </div>
-                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                            <p className="text-xs text-muted-foreground mb-1">Расходы</p>
+                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 relative group">
+                            <div className="flex justify-between items-start">
+                                <p className="text-xs text-muted-foreground mb-1">Расходы</p>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 hover:bg-red-500/30 text-red-700 -mt-1 -mr-1"
+                                    onClick={() => { setTxFormType('expense'); setTxFormOpen(true); }}
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </Button>
+                            </div>
                             <p className="text-lg font-bold text-red-600">
                                 -{formatCurrency(selectedDayData.expense, settings?.defaultCurrency)}
                             </p>
@@ -172,17 +213,20 @@ export default function FinancialCalendar() {
                             </p>
                         ) : (
                             <div className="space-y-2">
-                                {selectedDayData.dayTransactions.map(tx => (
-                                    <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border/50 hover:bg-accent/50 transition-colors">
-                                        <div className="flex flex-col gap-0.5">
-                                            <span className="font-medium text-sm">{tx.category || 'Без категории'}</span>
-                                            {tx.notes && <span className="text-xs text-muted-foreground">{tx.notes}</span>}
+                                {selectedDayData.dayTransactions.map(tx => {
+                                    const cat = getCategory(tx.categoryId);
+                                    return (
+                                        <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border/50 hover:bg-accent/50 transition-colors">
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="font-medium text-sm">{cat?.name || tx.merchant || 'Без категории'}</span>
+                                                {tx.notes && <span className="text-xs text-muted-foreground">{tx.notes}</span>}
+                                            </div>
+                                            <span className={`font-bold text-sm ${tx.type === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, tx.currency)}
+                                            </span>
                                         </div>
-                                        <span className={`font-bold text-sm ${tx.type === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
-                                            {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, tx.currency)}
-                                        </span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -210,6 +254,31 @@ export default function FinancialCalendar() {
                     )}
                 </CardContent>
             </Card>
-        </div>
+            <TransactionForm
+                open={txFormOpen}
+                onOpenChange={setTxFormOpen}
+                accounts={accounts}
+                categories={categories}
+                onSubmit={async (data) => {
+                    await createTransaction.mutateAsync(data);
+                    setTxFormOpen(false);
+                }}
+                defaultCurrency={settings?.defaultCurrency}
+                initialData={{
+                    type: txFormType,
+                    date: format(selectedDate, 'yyyy-MM-dd')
+                }}
+            />
+
+            <BatchTransactionForm
+                open={batchFormOpen}
+                onOpenChange={setBatchFormOpen}
+                accounts={accounts}
+                categories={categories}
+                onSubmit={(data) => createTransaction.mutateAsync(data)}
+                defaultCurrency={settings?.defaultCurrency}
+                initialDate={format(selectedDate, 'yyyy-MM-dd')}
+            />
+        </div >
     );
 }

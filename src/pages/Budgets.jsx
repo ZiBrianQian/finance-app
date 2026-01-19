@@ -15,14 +15,18 @@ import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { useCategories, useTransactions, useBudgets, useAppSettings, filterTransactionsByPeriod, convertCurrency, useLiveRates } from '@/components/finance/useFinanceData';
+import { useCategories, useTransactions, useBudgets, useAppSettings, useAccounts, filterTransactionsByPeriod, convertCurrency, useLiveRates } from '@/components/finance/useFinanceData';
 import { formatMoney } from '@/components/finance/constants';
 import BudgetCard from '@/components/finance/BudgetCard';
 import BudgetForm from '@/components/finance/BudgetForm';
+import CategoryIcon from '@/components/finance/CategoryIcon';
 
 export default function Budgets() {
     const { categories } = useCategories();
+    const { accounts } = useAccounts();
     const { transactions } = useTransactions();
     const { budgets, createBudget, updateBudget, deleteBudget } = useBudgets();
     const { settings } = useAppSettings();
@@ -32,6 +36,7 @@ export default function Budgets() {
     const [editingBudget, setEditingBudget] = useState(null);
     const [viewDate, setViewDate] = useState(new Date());
     const [deleteId, setDeleteId] = useState(null);
+    const [selectedRuleData, setSelectedRuleData] = useState(null); // { rule, start, end }
 
     const getPeriodRange = (budget) => {
         switch (budget.period) {
@@ -188,6 +193,7 @@ export default function Budgets() {
                                             currency={settings?.defaultCurrency || 'USD'}
                                             daysLeft={daysLeft}
                                             totalDays={totalDays}
+                                            onClick={() => setSelectedRuleData({ rule, start, end })}
                                         />
                                     ))}
                                 </div>
@@ -238,6 +244,67 @@ export default function Budgets() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Budget Details Dialog */}
+            <Dialog open={!!selectedRuleData} onOpenChange={(open) => !open && setSelectedRuleData(null)}>
+                <DialogContent className="max-w-lg max-h-[80vh] bg-card text-card-foreground border-border">
+                    <DialogHeader>
+                        <DialogTitle>
+                            <div className="flex items-center gap-2">
+                                {selectedRuleData && (() => {
+                                    const cat = getCategory(selectedRuleData.rule.categoryId);
+                                    return (
+                                        <>
+                                            {cat && <CategoryIcon icon={cat.icon} color={cat.color} size={24} />}
+                                            <span>{cat?.name || 'Расходы'} за {selectedRuleData.start ? format(selectedRuleData.start, 'LLLL', { locale: ru }) : ''}</span>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <ScrollArea className="h-[60vh] pr-4">
+                        <div className="space-y-2">
+                            {selectedRuleData && filterTransactionsByPeriod(transactions, selectedRuleData.start, selectedRuleData.end)
+                                .filter(tx => tx.type === 'expense' && tx.categoryId === selectedRuleData.rule.categoryId)
+                                .sort((a, b) => b.date.localeCompare(a.date))
+                                .map(tx => {
+                                    const acc = accounts.find(a => a.id === tx.accountId);
+                                    const cat = getCategory(tx.categoryId);
+                                    return (
+                                        <div key={tx.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border hover:bg-accent/50 transition-colors">
+                                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                                style={{ backgroundColor: cat?.color ? `${cat.color}15` : 'var(--muted)' }}
+                                            >
+                                                <CategoryIcon icon={cat?.icon} color={cat?.color} size={20} className="w-10 h-10" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm text-foreground truncate">
+                                                    {tx.merchant || cat?.name || 'Без описания'}
+                                                </p>
+                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                    <span>{format(new Date(tx.date), 'd MMM', { locale: ru })}</span>
+                                                    {acc && <><span>•</span><span>{acc.name}</span></>}
+                                                    {tx.notes && <><span>•</span><span>{tx.notes}</span></>}
+                                                </div>
+                                            </div>
+                                            <span className="font-semibold text-sm shrink-0 text-red-600">
+                                                -{formatMoney(tx.amount, tx.currency)}
+                                            </span>
+                                        </div>
+                                    );
+                                })
+                            }
+                            {selectedRuleData && filterTransactionsByPeriod(transactions, selectedRuleData.start, selectedRuleData.end)
+                                .filter(tx => tx.type === 'expense' && tx.categoryId === selectedRuleData.rule.categoryId).length === 0 && (
+                                    <div className="text-center py-12 text-muted-foreground">
+                                        <p>Нет расходов по этой категории за период</p>
+                                    </div>
+                                )}
+                        </div>
+                    </ScrollArea>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

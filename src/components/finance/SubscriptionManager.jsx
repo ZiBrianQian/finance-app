@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useRecurringRules, useAppSettings, useCategories, useAccounts } from './useFinanceData';
+import { useRecurringRules, useAppSettings, useCategories, useAccounts, useLiveRates, convertCurrency } from './useFinanceData';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Plus, CreditCard, CalendarDays, ExternalLink, Zap, Edit2, Trash2 } from 'lucide-react';
 import RecurringRuleForm from './RecurringRuleForm';
@@ -16,6 +16,7 @@ export default function SubscriptionManager() {
     const { settings } = useAppSettings();
     const { categories } = useCategories();
     const { accounts } = useAccounts();
+    const { rates } = useLiveRates(settings?.defaultCurrency);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingRule, setEditingRule] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
@@ -27,7 +28,9 @@ export default function SubscriptionManager() {
         if (sub.frequency === 'weekly') amount *= 4;
         if (sub.frequency === 'daily') amount *= 30;
         if (sub.frequency === 'yearly') amount /= 12;
-        return sum + amount;
+        // Convert to default currency
+        const converted = convertCurrency(amount, sub.currency || settings?.defaultCurrency || 'USD', settings?.defaultCurrency || 'USD', rates);
+        return sum + converted;
     }, 0);
 
     const totalYearly = totalMonthly * 12;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import MoneyInput from './MoneyInput';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -143,13 +144,11 @@ export default function RecurringRuleForm({
                     <div className="grid grid-cols-3 gap-3">
                         <div className="col-span-2">
                             <Label className="text-sm text-slate-500">Сумма</Label>
-                            <Input
-                                type="number"
-                                step="0.01"
+                            <MoneyInput
                                 value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
+                                onChange={setAmount}
                                 placeholder="0.00"
-                                className="mt-2"
+                                className="mt-2 text-lg font-medium"
                             />
                         </div>
                         <div>

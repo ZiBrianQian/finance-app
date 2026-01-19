@@ -7,11 +7,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { format } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, parseISO } from 'date-fns';
+import { ru } from 'date-fns/locale';
 import { parseMoney, formatMoney, CURRENCIES } from './constants';
 import CategoryIcon from './CategoryIcon';
 import { useLiveRates, convertCurrency } from '@/components/finance/useFinanceData';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CalendarIcon } from 'lucide-react';
 
 export default function TransactionForm({
     open,
@@ -167,11 +170,26 @@ export default function TransactionForm({
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <Label className="text-xs text-slate-500">Дата</Label>
-                            <Input
-                                type="date"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
-                            />
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full justify-start text-left font-normal"
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {date ? format(parseISO(date), 'd MMM yyyy', { locale: ru }) : 'Выбрать дату'}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={date ? parseISO(date) : undefined}
+                                        onSelect={(d) => d && setDate(format(d, 'yyyy-MM-dd'))}
+                                        locale={ru}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
                         </div>
                         <div>
                             <Label className="text-xs text-slate-500">

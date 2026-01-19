@@ -3,9 +3,10 @@ import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { formatMoney } from './constants';
 
-export default function StatsCard({ title, amount, currency, comparison, type = 'neutral', icon: Icon }) {
+export default function StatsCard({ title, amount, currency, comparison, type = 'neutral', icon: Icon, onClick }) {
     const isPositive = comparison > 0;
     const isNegative = comparison < 0;
+    const isClickable = !!onClick;
 
     const colors = {
         income: 'text-green-600 dark:text-green-400',
@@ -20,7 +21,10 @@ export default function StatsCard({ title, amount, currency, comparison, type = 
     };
 
     return (
-        <Card className="p-5 bg-card border-border shadow-sm">
+        <Card
+            className={`p-5 bg-card border-border shadow-sm ${isClickable ? 'cursor-pointer hover:border-primary/50 hover:shadow-md transition-all' : ''}`}
+            onClick={onClick}
+        >
             <div className="flex items-start justify-between mb-3">
                 <p className="text-sm font-medium text-muted-foreground">{title}</p>
                 {Icon && (
