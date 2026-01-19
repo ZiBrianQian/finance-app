@@ -11,6 +11,10 @@ import Goals from './pages/Goals';
 import Recurring from './pages/Recurring';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Calendar from './pages/Calendar';
+import Debts from './pages/Debts';
+import Subscriptions from './pages/Subscriptions';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,8 +52,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/transactions" element={<Transactions />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/goals" element={<Goals />} />
+            <Route path="/debts" element={<Debts />} />
+            <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/recurring" element={<Recurring />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />

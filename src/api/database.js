@@ -32,6 +32,22 @@ db.version(2).stores({
     exchangeRates: 'base, rates, lastUpdated'
 });
 
+// Version 3: Add debts store
+db.version(3).stores({
+    accounts: 'id, name, type, currency, isArchived, groupId, initialBalance, icon, color',
+    accountGroups: 'id, name',
+    categories: 'id, name, type, icon, color, isArchived, parentId',
+    transactions: 'id, type, amount, currency, date, categoryId, accountId, toAccountId, merchant, notes, paymentMethod, isRecurringInstance, recurringRuleId',
+    budgets: 'id, name, isActive, period, startDate, endDate',
+    goals: 'id, name, targetAmount, currentAmount, deadline, accountId, status, priority, color',
+    recurringRules: 'id, title, type, amount, currency, categoryId, accountId, frequency, nextRunDate, isActive',
+    notifications: 'id, type, title, message, isRead, data, created_date',
+    notificationSettings: 'id',
+    appSettings: 'id, defaultCurrency, dateFormat, theme, onboardingCompleted',
+    exchangeRates: 'base, rates, lastUpdated',
+    debts: 'id, name, amount, currency, type, dueDate, notes, isPaid, createdDate'
+});
+
 // Генерируем уникальный ID
 function generateId() {
     return crypto.randomUUID();
@@ -170,6 +186,25 @@ export const entities = {
         },
         delete: async (id) => {
             await db.recurringRules.delete(id);
+        }
+    },
+
+    Debt: {
+        list: async () => {
+            return await db.debts.toArray();
+        },
+        create: async (data) => {
+            const id = generateId();
+            const createdDate = new Date().toISOString();
+            await db.debts.add({ ...data, id, createdDate });
+            return { ...data, id, createdDate };
+        },
+        update: async (id, data) => {
+            await db.debts.update(id, data);
+            return { id, ...data };
+        },
+        delete: async (id) => {
+            await db.debts.delete(id);
         }
     },
 

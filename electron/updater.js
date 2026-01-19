@@ -25,6 +25,10 @@ let isDownloading = false;
  * Check GitHub for latest release
  */
 async function checkForUpdates() {
+    console.log('[Updater] Starting update check...');
+    console.log('[Updater] Current version:', CURRENT_VERSION);
+    console.log('[Updater] GitHub:', GITHUB_OWNER + '/' + GITHUB_REPO);
+
     return new Promise((resolve, reject) => {
         const options = {
             hostname: 'api.github.com',
@@ -34,12 +38,17 @@ async function checkForUpdates() {
             }
         };
 
+        console.log('[Updater] Fetching:', options.hostname + options.path);
+
         https.get(options, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
                 try {
+                    console.log('[Updater] Response status:', res.statusCode);
+
                     if (res.statusCode === 404) {
+                        console.log('[Updater] No releases found');
                         resolve({ updateAvailable: false, message: 'No releases found' });
                         return;
                     }
@@ -47,12 +56,20 @@ async function checkForUpdates() {
                     const release = JSON.parse(data);
                     const latestVersion = release.tag_name.replace('v', '');
 
+                    console.log('[Updater] Latest version on GitHub:', latestVersion);
+                    console.log('[Updater] Assets count:', release.assets?.length);
+
                     // Find portable exe asset
                     const portableAsset = release.assets.find(
                         a => a.name.toLowerCase().includes('portable') && a.name.endsWith('.exe')
                     );
 
-                    if (isNewerVersion(latestVersion, CURRENT_VERSION)) {
+                    console.log('[Updater] Portable asset found:', portableAsset?.name);
+
+                    const isNewer = isNewerVersion(latestVersion, CURRENT_VERSION);
+                    console.log('[Updater] Is newer version:', isNewer);
+
+                    if (isNewer) {
                         updateInfo = {
                             version: latestVersion,
                             releaseNotes: release.body || 'No release notes',
@@ -61,11 +78,14 @@ async function checkForUpdates() {
                             assetName: portableAsset?.name || null
                         };
 
+                        console.log('[Updater] Update available!', updateInfo);
+
                         resolve({
                             updateAvailable: true,
                             ...updateInfo
                         });
                     } else {
+                        console.log('[Updater] No update needed');
                         resolve({
                             updateAvailable: false,
                             currentVersion: CURRENT_VERSION,
@@ -73,10 +93,14 @@ async function checkForUpdates() {
                         });
                     }
                 } catch (error) {
+                    console.error('[Updater] Parse error:', error);
                     reject(error);
                 }
             });
-        }).on('error', reject);
+        }).on('error', (err) => {
+            console.error('[Updater] Request error:', err);
+            reject(err);
+        });
     });
 }
 
@@ -111,8 +135,18 @@ async function downloadUpdate(mainWindow) {
     isDownloading = true;
     downloadProgress = 0;
 
-    const exeDir = path.dirname(process.execPath);
-    const updatesDir = path.join(exeDir, 'updates');
+    // Use portable exe location, not temp extraction folder
+    const portableExeDir = process.env.PORTABLE_EXECUTABLE_DIR;
+    const portableExeFile = process.env.PORTABLE_EXECUTABLE_FILE;
+
+    console.log('[Updater] PORTABLE_EXECUTABLE_DIR:', portableExeDir);
+    console.log('[Updater] PORTABLE_EXECUTABLE_FILE:', portableExeFile);
+
+    // Fallback to process.execPath if not portable
+    const targetDir = portableExeDir || path.dirname(process.execPath);
+    const updatesDir = path.join(targetDir, 'updates');
+
+    console.log('[Updater] Updates directory:', updatesDir);
 
     // Create updates directory
     if (!fs.existsSync(updatesDir)) {
@@ -120,6 +154,7 @@ async function downloadUpdate(mainWindow) {
     }
 
     const downloadPath = path.join(updatesDir, updateInfo.assetName || 'update.exe');
+    console.log('[Updater] Download path:', downloadPath);
 
     return new Promise((resolve, reject) => {
         const downloadFile = (url) => {
@@ -154,6 +189,7 @@ async function downloadUpdate(mainWindow) {
                 file.on('finish', () => {
                     file.close();
                     isDownloading = false;
+                    console.log('[Updater] Download complete:', downloadPath);
                     resolve({ success: true, path: downloadPath });
                 });
 
@@ -176,52 +212,66 @@ async function downloadUpdate(mainWindow) {
  * Install update by creating a batch script and restarting
  */
 async function installUpdate() {
-    const exeDir = path.dirname(process.execPath);
-    const exeName = path.basename(process.execPath);
+    // Use portable exe location, not temp extraction folder
+    const portableExeDir = process.env.PORTABLE_EXECUTABLE_DIR;
+    const portableExeFile = process.env.PORTABLE_EXECUTABLE_FILE;
+
+    console.log('[Updater] Installing update...');
+    console.log('[Updater] PORTABLE_EXECUTABLE_DIR:', portableExeDir);
+    console.log('[Updater] PORTABLE_EXECUTABLE_FILE:', portableExeFile);
+
+    if (!portableExeDir || !portableExeFile) {
+        throw new Error('Cannot determine portable exe location. Update only works with portable version.');
+    }
+
+    const exeDir = portableExeDir;
+    const exeName = path.basename(portableExeFile);
+    const originalExePath = portableExeFile;
     const updatesDir = path.join(exeDir, 'updates');
     const newExePath = path.join(updatesDir, updateInfo?.assetName || 'update.exe');
+
+    console.log('[Updater] Original exe:', originalExePath);
+    console.log('[Updater] New exe:', newExePath);
 
     if (!fs.existsSync(newExePath)) {
         throw new Error('Update file not found. Please download the update first.');
     }
 
-    // Create update batch script
+    // Create update batch script with proper escaping
     const batchScript = `@echo off
 chcp 65001 >nul
-echo Обновление Finance Manager...
-echo Пожалуйста, подождите...
-timeout /t 2 /nobreak >nul
+echo Updating Finance Manager...
+echo Please wait...
+timeout /t 3 /nobreak >nul
 
-:: Try to delete old exe (may need multiple attempts)
 :retry_delete
-del "${path.join(exeDir, exeName)}" 2>nul
-if exist "${path.join(exeDir, exeName)}" (
+del "${originalExePath}" 2>nul
+if exist "${originalExePath}" (
     timeout /t 1 /nobreak >nul
     goto retry_delete
 )
 
-:: Move new exe to app directory
-move "${newExePath}" "${path.join(exeDir, exeName)}"
+move "${newExePath}" "${originalExePath}"
 
-:: Clean up updates folder
 rmdir /s /q "${updatesDir}" 2>nul
 
-:: Start new version
-echo Запуск новой версии...
-start "" "${path.join(exeDir, exeName)}"
+echo Starting new version...
+start "" "${originalExePath}"
 
-:: Delete this batch file
 del "%~f0"
 `;
 
     const batchPath = path.join(exeDir, 'update.bat');
+    console.log('[Updater] Batch script path:', batchPath);
+
     fs.writeFileSync(batchPath, batchScript, { encoding: 'utf8' });
 
     // Run the batch script and quit the app
     spawn('cmd.exe', ['/c', batchPath], {
         detached: true,
         stdio: 'ignore',
-        shell: true
+        shell: true,
+        cwd: exeDir
     }).unref();
 
     // Quit the app

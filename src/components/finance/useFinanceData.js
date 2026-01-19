@@ -478,3 +478,29 @@ export const calculatePeriodStats = (transactions, startDate, endDate, targetCur
     return { income, expense, net: income - expense, count: filtered.length };
 };
 
+
+export const useDebts = () => {
+    const queryClient = useQueryClient();
+
+    const { data: debts = [], isLoading } = useQuery({
+        queryKey: ['debts'],
+        queryFn: () => entities.Debt.list(),
+    });
+
+    const createDebt = useMutation({
+        mutationFn: (data) => entities.Debt.create(data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['debts'] }),
+    });
+
+    const updateDebt = useMutation({
+        mutationFn: ({ id, data }) => entities.Debt.update(id, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['debts'] }),
+    });
+
+    const deleteDebt = useMutation({
+        mutationFn: (id) => entities.Debt.delete(id),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['debts'] }),
+    });
+
+    return { debts, isLoading, createDebt, updateDebt, deleteDebt };
+};

@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/lib/utils';
 import {
     LayoutDashboard, ArrowLeftRight, PiggyBank, Target,
-    BarChart3, Settings, Menu, X, Wallet, Repeat, Bell
+    BarChart3, Settings, Menu, X, Wallet, Repeat, Bell,
+    Calendar, CreditCard, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
@@ -14,12 +15,16 @@ import NotificationCenter from '@/components/finance/NotificationCenter';
 const navItems = [
     { name: 'Dashboard', label: 'Сводка', icon: LayoutDashboard },
     { name: 'Transactions', label: 'Транзакции', icon: ArrowLeftRight },
+    { name: 'Calendar', label: 'Календарь', icon: Calendar },
     { name: 'Budgets', label: 'Бюджеты', icon: PiggyBank },
     { name: 'Goals', label: 'Цели', icon: Target },
+    { name: 'Debts', label: 'Долги', icon: CreditCard },
+    { name: 'Subscriptions', label: 'Подписки', icon: Zap },
     { name: 'Recurring', label: 'Рекуррентные', icon: Repeat },
     { name: 'Reports', label: 'Отчёты', icon: BarChart3 },
     { name: 'Settings', label: 'Настройки', icon: Settings },
 ];
+
 
 export default function Layout({ children }) {
     const location = useLocation();
