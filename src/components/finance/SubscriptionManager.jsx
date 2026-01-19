@@ -6,6 +6,10 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { Plus, CreditCard, CalendarDays, ExternalLink, Zap, Edit2, Trash2 } from 'lucide-react';
 import RecurringRuleForm from './RecurringRuleForm';
 import { Progress } from '@/components/ui/progress';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function SubscriptionManager() {
     const { rules, createRule, updateRule, deleteRule } = useRecurringRules();
@@ -14,6 +18,7 @@ export default function SubscriptionManager() {
     const { accounts } = useAccounts();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingRule, setEditingRule] = useState(null);
+    const [deleteId, setDeleteId] = useState(null);
 
     const subscriptions = rules.filter(r => r.type === 'expense');
 
@@ -36,9 +41,10 @@ export default function SubscriptionManager() {
         setIsFormOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Вы уверены, что хотите удалить эту подписку?')) {
-            await deleteRule.mutateAsync(id);
+    const confirmDelete = async () => {
+        if (deleteId) {
+            await deleteRule.mutateAsync(deleteId);
+            setDeleteId(null);
         }
     };
 
@@ -149,46 +155,50 @@ export default function SubscriptionManager() {
                         ) : (
                             subscriptions.map(sub => (
                                 <Card key={sub.id} className="group hover:shadow-lg transition-all duration-300">
-                                    <CardContent className="p-6 relative overflow-hidden">
-                                        <div className="absolute top-2 right-2 flex gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleEdit(sub)}>
-                                                <Edit2 className="w-4 h-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-red-500" onClick={() => handleDelete(sub.id)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-
+                                    <CardContent className="p-5">
                                         <div className="flex items-start justify-between mb-4">
-                                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl font-bold">
-                                                {sub.title.charAt(0).toUpperCase()}
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 text-lg font-bold">
+                                                    {sub.title.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-base leading-none mb-1">{sub.title}</h4>
+                                                    <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full inline-block">
+                                                        {sub.frequency === 'monthly' ? 'Ежемесячно' :
+                                                            sub.frequency === 'yearly' ? 'Ежегодно' :
+                                                                sub.frequency === 'weekly' ? 'Еженедельно' : sub.frequency}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="text-2xl font-bold block">
-                                                    {formatCurrency(sub.amount, sub.currency)}
-                                                </span>
-                                                <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-full">
-                                                    {sub.frequency === 'monthly' ? 'Ежемесячно' :
-                                                        sub.frequency === 'yearly' ? 'Ежегодно' :
-                                                            sub.frequency === 'weekly' ? 'Еженедельно' : sub.frequency}
-                                                </span>
+
+                                            <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-purple-50 hover:text-purple-600" onClick={() => handleEdit(sub)}>
+                                                    <Edit2 className="w-4 h-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-50 text-red-500" onClick={() => setDeleteId(sub.id)}>
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
                                             </div>
                                         </div>
 
-                                        <h4 className="font-bold text-lg mb-1">{sub.title}</h4>
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            Следующая оплата: {formatDate(sub.nextRunDate)}
-                                        </p>
+                                        <div className="mb-4">
+                                            <span className="text-2xl font-bold block text-foreground">
+                                                {formatCurrency(sub.amount, sub.currency)}
+                                            </span>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                Следующая оплата: <span className="text-foreground font-medium">{formatDate(sub.nextRunDate)}</span>
+                                            </p>
+                                        </div>
 
                                         {sub.frequency === 'monthly' && (
-                                            <div className="space-y-1">
+                                            <div className="space-y-1.5 pt-2 border-t border-border/50">
                                                 <div className="flex justify-between text-[10px] text-muted-foreground">
                                                     <span>Прогресс периода</span>
                                                     <span>Осталось {
                                                         Math.max(0, Math.ceil((new Date(sub.nextRunDate) - new Date()) / (1000 * 60 * 60 * 24)))
                                                     } дн.</span>
                                                 </div>
-                                                <Progress value={Math.random() * 100} className="h-1" />
+                                                <Progress value={Math.random() * 100} className="h-1.5" indicatorClassName="bg-purple-500" />
                                             </div>
                                         )}
                                     </CardContent>
@@ -208,6 +218,21 @@ export default function SubscriptionManager() {
                 initialData={editingRule}
                 defaultCurrency={settings?.defaultCurrency || 'USD'}
             />
+
+            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Удалить подписку?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Это действие нельзя отменить. Подписка будет удалена из списка регулярных платежей.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">Удалить</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
