@@ -1,0 +1,41 @@
+{
+    "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+    "appId": "com.finance.manager",
+    "productName": "Finance Manager",
+    "directories": {
+        "output": "release",
+        "buildResources": "build"
+    },
+    "files": [
+        "dist/**/*",
+        "electron/**/*"
+    ],
+    "win": {
+        "target": [
+            {
+                "target": "portable",
+                "arch": [
+                    "x64"
+                ]
+            },
+            {
+                "target": "zip",
+                "arch": [
+                    "x64"
+                ]
+            }
+        ],
+        "icon": "public/icon.png",
+        "verifyUpdateCodeSignature": false,
+        "forceCodeSigning": false
+    },
+    "portable": {
+        "artifactName": "FinanceManager-Portable.exe"
+    },
+    "publish": {
+        "provider": "github",
+        "owner": "ZiBrianQian",
+        "repo": "finance-app",
+        "releaseType": "release"
+    }
+}
