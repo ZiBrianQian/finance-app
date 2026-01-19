@@ -2,7 +2,6 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { initUpdater, checkOnStartup } from './updater.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,33 +10,60 @@ const __dirname = path.dirname(__filename);
 // PORTABLE DATA STORAGE CONFIGURATION
 // ============================================
 
-// Determine if running as portable or development
-const isDev = process.env.NODE_ENV === 'development' || process.env.VITE_DEV_SERVER_URL;
+// Portable detection - electron-builder sets PORTABLE_EXECUTABLE_DIR for portable apps
+const PORTABLE_EXE_DIR = process.env.PORTABLE_EXECUTABLE_DIR;
+const isPortable = !!PORTABLE_EXE_DIR;
 
-// Get the directory where the executable is located
-const getPortableDataPath = () => {
-    if (isDev) {
-        // In development, use default userData path
-        return null;
+// Log for debugging
+console.log('[Portable] PORTABLE_EXECUTABLE_DIR:', PORTABLE_EXE_DIR);
+console.log('[Portable] isPortable:', isPortable);
+console.log('[Portable] process.execPath:', process.execPath);
+console.log('[Portable] app.isPackaged:', app.isPackaged);
+
+// Set portable data path BEFORE app is ready (critical!)
+if (isPortable && PORTABLE_EXE_DIR) {
+    const dataPath = path.join(PORTABLE_EXE_DIR, 'data');
+
+    console.log('[Portable] Setting userData to:', dataPath);
+
+    // Create directory synchronously before setting path
+    try {
+        if (!fs.existsSync(dataPath)) {
+            fs.mkdirSync(dataPath, { recursive: true });
+            console.log('[Portable] Created data directory');
+        }
+
+        // Set the userData path
+        app.setPath('userData', dataPath);
+        console.log('[Portable] userData successfully set to:', app.getPath('userData'));
+    } catch (err) {
+        console.error('[Portable] Error setting up portable data:', err);
     }
-
-    // For packaged app, store data next to the executable
+} else if (app.isPackaged) {
+    // Fallback for non-portable packaged app - still try to use exe directory
     const exeDir = path.dirname(process.execPath);
     const dataPath = path.join(exeDir, 'data');
 
-    // Create data directory if it doesn't exist
-    if (!fs.existsSync(dataPath)) {
-        fs.mkdirSync(dataPath, { recursive: true });
+    console.log('[Portable] Fallback - trying exe directory:', dataPath);
+
+    try {
+        if (!fs.existsSync(dataPath)) {
+            fs.mkdirSync(dataPath, { recursive: true });
+        }
+        app.setPath('userData', dataPath);
+        console.log('[Portable] Fallback userData set to:', app.getPath('userData'));
+    } catch (err) {
+        console.error('[Portable] Fallback failed, using default:', err);
     }
-
-    return dataPath;
-};
-
-// Set portable data path before app is ready
-const portableDataPath = getPortableDataPath();
-if (portableDataPath) {
-    app.setPath('userData', portableDataPath);
+} else {
+    console.log('[Portable] Development mode - using default userData:', app.getPath('userData'));
 }
+
+// Import updater after path is set
+import { initUpdater, checkOnStartup } from './updater.js';
+
+// Check if running in development mode
+const isDev = !app.isPackaged;
 
 // ============================================
 // WINDOW CREATION
