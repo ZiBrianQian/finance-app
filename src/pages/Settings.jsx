@@ -114,7 +114,7 @@ export default function Settings() {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Настройки</h1>
+                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-700 to-slate-900 dark:from-gray-200 dark:to-slate-400">Настройки</h1>
                     <p className="text-muted-foreground mt-1">Управление приложением</p>
                 </div>
 

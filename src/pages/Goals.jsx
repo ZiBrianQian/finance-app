@@ -99,10 +99,10 @@ export default function Goals() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Цели</h1>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-600">Цели</h1>
                         <p className="text-muted-foreground mt-1">Отслеживайте прогресс накоплений</p>
                     </div>
-                    <Button onClick={() => { setEditingGoal(null); setFormOpen(true); }}>
+                    <Button onClick={() => { setEditingGoal(null); setFormOpen(true); }} className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-lg shadow-amber-500/20">
                         <Plus className="w-4 h-4 mr-2" />
                         Новая цель
                     </Button>
@@ -176,14 +176,14 @@ export default function Goals() {
                 ) : (
                     <Card className="p-12 bg-card border-border text-center">
                         <div className="max-w-sm mx-auto">
-                            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
-                                <Target className="w-8 h-8 text-purple-500" />
+                            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
+                                <Target className="w-8 h-8 text-amber-500" />
                             </div>
                             <h3 className="text-lg font-semibold text-foreground mb-2">Нет целей</h3>
                             <p className="text-muted-foreground mb-6">
                                 Создайте финансовую цель, чтобы отслеживать прогресс накоплений
                             </p>
-                            <Button onClick={() => setFormOpen(true)}>
+                            <Button onClick={() => setFormOpen(true)} className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-lg shadow-amber-500/20">
                                 <Plus className="w-4 h-4 mr-2" />
                                 Создать цель
                             </Button>

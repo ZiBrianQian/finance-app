@@ -139,7 +139,7 @@ export default function Transactions() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Транзакции</h1>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600">Транзакции</h1>
                         <p className="text-muted-foreground mt-1">{filteredTransactions.length} записей</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export default function Transactions() {
                             setCustomRange={setCustomRange}
                             compact
                         />
-                        <Button onClick={() => { setEditingTx(null); setTxFormOpen(true); }}>
+                        <Button onClick={() => { setEditingTx(null); setTxFormOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/20">
                             <Plus className="w-4 h-4 mr-2" />
                             <span className="hidden sm:inline">Добавить</span>
                         </Button>

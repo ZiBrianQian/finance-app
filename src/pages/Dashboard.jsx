@@ -204,7 +204,7 @@ export default function Dashboard() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Сводка</h1>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Сводка</h1>
                         <p className="text-muted-foreground mt-1">Ваши финансы за {period === 'month' ? 'месяц' : period === 'week' ? 'неделю' : 'период'}</p>
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">

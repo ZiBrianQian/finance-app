@@ -201,7 +201,7 @@ export default function Reports() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Отчёты</h1>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-500 to-pink-600">Отчёты</h1>
                         <p className="text-muted-foreground mt-1">Анализ доходов и расходов</p>
                     </div>
                     <div className="flex items-center gap-3">

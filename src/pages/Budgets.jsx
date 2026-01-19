@@ -107,7 +107,7 @@ export default function Budgets() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Бюджеты</h1>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-600">Бюджеты</h1>
                         <p className="text-muted-foreground mt-1">Планируйте и контролируйте расходы</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -122,7 +122,7 @@ export default function Budgets() {
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
                         </div>
-                        <Button onClick={() => { setEditingBudget(null); setFormOpen(true); }}>
+                        <Button onClick={() => { setEditingBudget(null); setFormOpen(true); }} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20">
                             <Plus className="w-4 h-4 mr-2" />
                             Новый бюджет
                         </Button>
@@ -185,14 +185,14 @@ export default function Budgets() {
                 ) : (
                     <Card className="p-12 bg-card border-border text-center">
                         <div className="max-w-sm mx-auto">
-                            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-                                <Plus className="w-8 h-8 text-muted-foreground" />
+                            <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+                                <Plus className="w-8 h-8 text-blue-500" />
                             </div>
                             <h3 className="text-lg font-semibold text-foreground mb-2">Нет бюджетов</h3>
                             <p className="text-muted-foreground mb-6">
                                 Создайте бюджет, чтобы контролировать расходы по категориям
                             </p>
-                            <Button onClick={() => setFormOpen(true)}>
+                            <Button onClick={() => setFormOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20">
                                 <Plus className="w-4 h-4 mr-2" />
                                 Создать бюджет
                             </Button>

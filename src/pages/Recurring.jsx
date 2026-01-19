@@ -58,10 +58,10 @@ export default function Recurring() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Рекуррентные платежи</h1>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500">Рекуррентные платежи</h1>
                         <p className="text-muted-foreground mt-1">Автоматические повторяющиеся операции</p>
                     </div>
-                    <Button onClick={() => { setEditingRule(null); setFormOpen(true); }}>
+                    <Button onClick={() => { setEditingRule(null); setFormOpen(true); }} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-500/20">
                         <Plus className="w-4 h-4 mr-2" />
                         Новое правило
                     </Button>
@@ -116,14 +116,14 @@ export default function Recurring() {
                 ) : (
                     <Card className="p-12 bg-card border-border text-center">
                         <div className="max-w-sm mx-auto">
-                            <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-                                <Repeat className="w-8 h-8 text-blue-500" />
+                            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                                <Repeat className="w-8 h-8 text-purple-500" />
                             </div>
                             <h3 className="text-lg font-semibold text-foreground mb-2">Нет рекуррентных правил</h3>
                             <p className="text-muted-foreground mb-6">
                                 Создайте автоматические правила для повторяющихся доходов и расходов
                             </p>
-                            <Button onClick={() => setFormOpen(true)}>
+                            <Button onClick={() => setFormOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-500/20">
                                 <Plus className="w-4 h-4 mr-2" />
                                 Создать правило
                             </Button>
