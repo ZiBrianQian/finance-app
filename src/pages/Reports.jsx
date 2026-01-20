@@ -3,16 +3,25 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
-import { format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, parseISO, getDay } from 'date-fns';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Download, TrendingUp, TrendingDown, ArrowUpDown, CalendarDays, GitCompare } from 'lucide-react';
+import { format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, parseISO, getDay, startOfMonth, endOfMonth, subMonths, subYears } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { toast } from 'sonner';
 
-import { useAccounts, useCategories, useTransactions, useAppSettings, usePeriod, filterTransactionsByPeriod, calculatePeriodStats, convertCurrency, useLiveRates } from '@/components/finance/useFinanceData';
+import { useAccounts, useCategories, useTransactions, useAppSettings, filterTransactionsByPeriod, calculatePeriodStats, convertCurrency, useLiveRates } from '@/components/finance/useFinanceData';
 import { formatMoney } from '@/components/finance/constants';
-import PeriodSelector from '@/components/finance/PeriodSelector';
+import DateRangePicker from '@/components/finance/DateRangePicker';
 import { CategoryPieChart, IncomeExpenseChart } from '@/components/finance/Charts';
 import CategoryIcon from '@/components/finance/CategoryIcon';
+
+// Presets for comparison period
+const COMPARE_PRESETS = [
+    { value: 'prev', label: 'Прошлый период' },
+    { value: 'lastYear', label: 'Год назад' },
+    { value: 'custom', label: 'Произвольно' },
+];
 
 export default function Reports() {
     const { accounts } = useAccounts();
@@ -20,17 +29,52 @@ export default function Reports() {
     const { transactions } = useTransactions();
     const { settings } = useAppSettings();
     const { rates } = useLiveRates(settings?.defaultCurrency || 'USD');
-    const { period, setPeriod, customRange, setCustomRange, getDateRange, getPrevDateRange } = usePeriod('month');
+
+    // Main period selection
+    const [mainRange, setMainRange] = useState({
+        start: startOfMonth(new Date()),
+        end: endOfMonth(new Date())
+    });
+
+    // Comparison settings
+    const [compareEnabled, setCompareEnabled] = useState(true);
+    const [compareType, setCompareType] = useState('prev');
+    const [customCompareRange, setCustomCompareRange] = useState({
+        start: startOfMonth(subMonths(new Date(), 1)),
+        end: endOfMonth(subMonths(new Date(), 1))
+    });
 
     const [reportType, setReportType] = useState('expenses');
     const [accountFilter, setAccountFilter] = useState('all');
     const [currencyFilter, setCurrencyFilter] = useState('all');
 
-    const { start, end } = getDateRange();
-    const prevRange = getPrevDateRange();
+    // Calculate comparison range based on type
+    const compareRange = useMemo(() => {
+        if (!compareEnabled) return null;
+
+        switch (compareType) {
+            case 'prev':
+                // Same duration, immediately before main range
+                const duration = mainRange.end - mainRange.start;
+                return {
+                    start: new Date(mainRange.start.getTime() - duration - 86400000),
+                    end: new Date(mainRange.start.getTime() - 86400000)
+                };
+            case 'lastYear':
+                // Same period, one year ago
+                return {
+                    start: subYears(mainRange.start, 1),
+                    end: subYears(mainRange.end, 1)
+                };
+            case 'custom':
+                return customCompareRange;
+            default:
+                return null;
+        }
+    }, [compareEnabled, compareType, mainRange, customCompareRange]);
 
     const filteredTransactions = useMemo(() => {
-        let result = filterTransactionsByPeriod(transactions, start, end);
+        let result = filterTransactionsByPeriod(transactions, mainRange.start, mainRange.end);
 
         if (accountFilter !== 'all') {
             result = result.filter(t => t.accountId === accountFilter);
@@ -40,10 +84,12 @@ export default function Reports() {
         }
 
         return result;
-    }, [transactions, start, end, accountFilter, currencyFilter]);
+    }, [transactions, mainRange, accountFilter, currencyFilter]);
 
-    const prevFilteredTransactions = useMemo(() => {
-        let result = filterTransactionsByPeriod(transactions, prevRange.start, prevRange.end);
+    const compareFilteredTransactions = useMemo(() => {
+        if (!compareRange) return [];
+
+        let result = filterTransactionsByPeriod(transactions, compareRange.start, compareRange.end);
 
         if (accountFilter !== 'all') {
             result = result.filter(t => t.accountId === accountFilter);
@@ -53,17 +99,17 @@ export default function Reports() {
         }
 
         return result;
-    }, [transactions, prevRange, accountFilter, currencyFilter]);
+    }, [transactions, compareRange, accountFilter, currencyFilter]);
 
     const currentStats = useMemo(() =>
-        calculatePeriodStats(filteredTransactions, start, end, settings?.defaultCurrency, rates),
-        [filteredTransactions, start, end, settings?.defaultCurrency, rates]
+        calculatePeriodStats(filteredTransactions, mainRange.start, mainRange.end, settings?.defaultCurrency, rates),
+        [filteredTransactions, mainRange, settings?.defaultCurrency, rates]
     );
 
-    const prevStats = useMemo(() =>
-        calculatePeriodStats(prevFilteredTransactions, prevRange.start, prevRange.end, settings?.defaultCurrency, rates),
-        [prevFilteredTransactions, prevRange, settings?.defaultCurrency, rates]
-    );
+    const compareStats = useMemo(() => {
+        if (!compareRange) return { income: 0, expense: 0, net: 0, count: 0 };
+        return calculatePeriodStats(compareFilteredTransactions, compareRange.start, compareRange.end, settings?.defaultCurrency, rates);
+    }, [compareFilteredTransactions, compareRange, settings?.defaultCurrency, rates]);
 
     const categoryData = useMemo(() => {
         const type = reportType === 'expenses' ? 'expense' : 'income';
@@ -85,7 +131,7 @@ export default function Reports() {
     }, [filteredTransactions, categories, reportType, settings?.defaultCurrency, rates]);
 
     const timeSeriesData = useMemo(() => {
-        const days = eachDayOfInterval({ start, end });
+        const days = eachDayOfInterval({ start: mainRange.start, end: mainRange.end });
 
         return days.map(day => {
             const dateStr = format(day, 'yyyy-MM-dd');
@@ -101,7 +147,7 @@ export default function Reports() {
                     .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', settings?.defaultCurrency || 'USD', rates), 0)
             };
         });
-    }, [filteredTransactions, start, end, settings?.defaultCurrency, rates]);
+    }, [filteredTransactions, mainRange, settings?.defaultCurrency, rates]);
 
     const heatmapData = useMemo(() => {
         const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
@@ -127,6 +173,8 @@ export default function Reports() {
     }, [filteredTransactions, settings?.defaultCurrency, rates]);
 
     const comparisonData = useMemo(() => {
+        if (!compareEnabled || !compareRange) return [];
+
         const currentCats = {};
         const prevCats = {};
 
@@ -139,7 +187,7 @@ export default function Reports() {
                 currentCats[name] = (currentCats[name] || 0) + amount;
             });
 
-        prevFilteredTransactions
+        compareFilteredTransactions
             .filter(t => t.type === 'expense')
             .forEach(tx => {
                 const cat = categories.find(c => c.id === tx.categoryId);
@@ -158,21 +206,14 @@ export default function Reports() {
 
             return { name, current, prev, change, color: cat?.color, icon: cat?.icon };
         }).sort((a, b) => b.current - a.current);
-    }, [filteredTransactions, prevFilteredTransactions, categories, settings?.defaultCurrency, rates]);
+    }, [filteredTransactions, compareFilteredTransactions, compareEnabled, compareRange, categories, settings?.defaultCurrency, rates]);
 
     const exportCSV = () => {
-        const type = reportType === 'expenses' ? 'expense' : 'income';
-        // Use categoryData which is already aggregated and converted
         const total = categoryData.reduce((sum, c) => sum + c.value, 0);
 
         const headers = ['Категория', 'Сумма', 'Процент'];
         const rows = categoryData.map(cat => [
             cat.name,
-            (cat.value / 100).toFixed(2), // Assume amount is in cents? Wait, app uses cents or full? My code usually uses full units but let's check. 
-            // `calculatePeriodStats` and `convert` return full if input is full. I think Input is full units.
-            // But if it was displaying `formatMoney`, formatMoney handles it.
-            // csv export: I'll just output raw value for now or fixed.
-            // Wait, `value` is sum. `formatMoney` is used elsewhere.
             cat.value.toFixed(2),
             total > 0 ? ((cat.value / total) * 100).toFixed(1) + '%' : '0%'
         ]);
@@ -186,7 +227,7 @@ export default function Reports() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `report-${reportType}-${format(start, 'yyyy-MM-dd')}.csv`;
+        a.download = `report-${reportType}-${format(mainRange.start, 'yyyy-MM-dd')}.csv`;
         a.click();
         URL.revokeObjectURL(url);
         toast.success('Отчёт экспортирован');
@@ -194,6 +235,12 @@ export default function Reports() {
 
     const currencies = [...new Set(transactions.map(t => t.currency))];
     const total = categoryData.reduce((sum, c) => sum + c.value, 0);
+
+    // Format period label
+    const formatPeriodLabel = (range) => {
+        if (!range?.start || !range?.end) return '';
+        return `${format(range.start, 'd MMM yyyy', { locale: ru })} — ${format(range.end, 'd MMM yyyy', { locale: ru })}`;
+    };
 
     return (
         <div className="min-h-screen bg-background">
@@ -205,19 +252,89 @@ export default function Reports() {
                         <p className="text-muted-foreground mt-1">Анализ доходов и расходов</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <PeriodSelector
-                            period={period}
-                            setPeriod={setPeriod}
-                            customRange={customRange}
-                            setCustomRange={setCustomRange}
-                            compact
-                        />
                         <Button variant="outline" onClick={exportCSV}>
                             <Download className="w-4 h-4 mr-2" />
                             Экспорт
                         </Button>
                     </div>
                 </div>
+
+                {/* Period Selection */}
+                <Card className="p-4 mb-6 bg-card border-border">
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                        {/* Main Period */}
+                        <div className="flex items-center gap-3">
+                            <CalendarDays className="w-5 h-5 text-primary" />
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Период отчёта</p>
+                                <DateRangePicker
+                                    value={mainRange}
+                                    onChange={setMainRange}
+                                    label="Выберите период"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="hidden lg:block h-10 w-px bg-border" />
+
+                        {/* Comparison Toggle & Settings */}
+                        <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-2">
+                                <Switch
+                                    id="compare-toggle"
+                                    checked={compareEnabled}
+                                    onCheckedChange={setCompareEnabled}
+                                />
+                                <Label htmlFor="compare-toggle" className="text-sm cursor-pointer">
+                                    Сравнение
+                                </Label>
+                            </div>
+
+                            {compareEnabled && (
+                                <>
+                                    <Select value={compareType} onValueChange={setCompareType}>
+                                        <SelectTrigger className="w-44 bg-background border-input">
+                                            <GitCompare className="w-4 h-4 mr-2 text-muted-foreground" />
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {COMPARE_PRESETS.map(p => (
+                                                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    {compareType === 'custom' && (
+                                        <DateRangePicker
+                                            value={customCompareRange}
+                                            onChange={setCustomCompareRange}
+                                            label="Период сравнения"
+                                            showPresets={true}
+                                        />
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Selected periods display */}
+                    {compareEnabled && compareRange && (
+                        <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="px-2 py-1 bg-primary/10 text-primary rounded-md font-medium">
+                                    Текущий
+                                </span>
+                                <span className="text-muted-foreground">{formatPeriodLabel(mainRange)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="px-2 py-1 bg-muted text-muted-foreground rounded-md font-medium">
+                                    Сравнение
+                                </span>
+                                <span className="text-muted-foreground">{formatPeriodLabel(compareRange)}</span>
+                            </div>
+                        </div>
+                    )}
+                </Card>
 
                 {/* Filters */}
                 <Card className="p-4 mb-6 bg-card border-border">
@@ -266,17 +383,33 @@ export default function Reports() {
                         <p className={`text-2xl font-bold mt-1 ${reportType === 'expenses' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                             {formatMoney(reportType === 'expenses' ? currentStats.expense : currentStats.income, settings?.defaultCurrency)}
                         </p>
-                        <div className="flex items-center gap-1 mt-2">
-                            {(reportType === 'expenses' ?
-                                (prevStats.expense > 0 ? ((currentStats.expense - prevStats.expense) / prevStats.expense) * 100 : 0) :
-                                (prevStats.income > 0 ? ((currentStats.income - prevStats.income) / prevStats.income) * 100 : 0)
-                            ) > 0 ? (
-                                <TrendingUp className="w-4 h-4 text-red-500" />
-                            ) : (
-                                <TrendingDown className="w-4 h-4 text-green-500" />
-                            )}
-                            <span className="text-sm text-muted-foreground">vs прошлый период</span>
-                        </div>
+                        {compareEnabled && (
+                            <div className="flex items-center gap-1 mt-2">
+                                {(() => {
+                                    const currentVal = reportType === 'expenses' ? currentStats.expense : currentStats.income;
+                                    const prevVal = reportType === 'expenses' ? compareStats.expense : compareStats.income;
+                                    const change = prevVal > 0 ? ((currentVal - prevVal) / prevVal) * 100 : 0;
+                                    return (
+                                        <>
+                                            {change > 0 ? (
+                                                <TrendingUp className={`w-4 h-4 ${reportType === 'expenses' ? 'text-red-500' : 'text-green-500'}`} />
+                                            ) : change < 0 ? (
+                                                <TrendingDown className={`w-4 h-4 ${reportType === 'expenses' ? 'text-green-500' : 'text-red-500'}`} />
+                                            ) : null}
+                                            <span className={`text-sm font-medium ${change > 0
+                                                    ? (reportType === 'expenses' ? 'text-red-600' : 'text-green-600')
+                                                    : change < 0
+                                                        ? (reportType === 'expenses' ? 'text-green-600' : 'text-red-600')
+                                                        : 'text-muted-foreground'
+                                                }`}>
+                                                {change > 0 ? '+' : ''}{change.toFixed(1)}%
+                                            </span>
+                                            <span className="text-xs text-muted-foreground ml-1">vs сравнение</span>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        )}
                     </Card>
 
                     <Card className="p-5 bg-card border-border">
@@ -284,6 +417,11 @@ export default function Reports() {
                         <p className="text-2xl font-bold mt-1 text-foreground">
                             {filteredTransactions.filter(t => t.type === (reportType === 'expenses' ? 'expense' : 'income')).length}
                         </p>
+                        {compareEnabled && (
+                            <p className="text-sm text-muted-foreground mt-2">
+                                было: {compareFilteredTransactions.filter(t => t.type === (reportType === 'expenses' ? 'expense' : 'income')).length}
+                            </p>
+                        )}
                     </Card>
 
                     <Card className="p-5 bg-card border-border">
@@ -353,33 +491,47 @@ export default function Reports() {
 
                     {/* Period comparison */}
                     <Card className="p-6 bg-card border-border">
-                        <h3 className="text-lg font-semibold text-foreground mb-4">Сравнение периодов</h3>
-                        <div className="space-y-3">
-                            {comparisonData.slice(0, 8).map((cat, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
-                                    <div className="flex items-center gap-3">
-                                        <CategoryIcon icon={cat.icon} color={cat.color} size={18} className="w-9 h-9" />
-                                        <div>
-                                            <p className="font-medium text-foreground">{cat.name}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                было: {formatMoney(cat.prev, settings?.defaultCurrency)}
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-foreground">Сравнение периодов</h3>
+                            {!compareEnabled && (
+                                <Button variant="ghost" size="sm" onClick={() => setCompareEnabled(true)}>
+                                    Включить
+                                </Button>
+                            )}
+                        </div>
+                        {compareEnabled ? (
+                            <div className="space-y-3">
+                                {comparisonData.slice(0, 8).map((cat, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
+                                        <div className="flex items-center gap-3">
+                                            <CategoryIcon icon={cat.icon} color={cat.color} size={18} className="w-9 h-9" />
+                                            <div>
+                                                <p className="font-medium text-foreground">{cat.name}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    было: {formatMoney(cat.prev, settings?.defaultCurrency)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-semibold text-foreground">
+                                                {formatMoney(cat.current, settings?.defaultCurrency)}
+                                            </p>
+                                            <p className={`text-sm font-medium ${cat.change > 0 ? 'text-red-600 dark:text-red-400' : cat.change < 0 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                                                {cat.change > 0 ? '+' : ''}{cat.change.toFixed(1)}%
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-semibold text-foreground">
-                                            {formatMoney(cat.current, settings?.defaultCurrency)}
-                                        </p>
-                                        <p className={`text-sm font-medium ${cat.change > 0 ? 'text-red-600 dark:text-red-400' : cat.change < 0 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                                            {cat.change > 0 ? '+' : ''}{cat.change.toFixed(1)}%
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                            {comparisonData.length === 0 && (
-                                <p className="text-center text-muted-foreground py-6">Нет данных для сравнения</p>
-                            )}
-                        </div>
+                                ))}
+                                {comparisonData.length === 0 && (
+                                    <p className="text-center text-muted-foreground py-6">Нет данных для сравнения</p>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-muted-foreground">
+                                <GitCompare className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                <p>Включите сравнение для анализа изменений</p>
+                            </div>
+                        )}
                     </Card>
                 </div>
 

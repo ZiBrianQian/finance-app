@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/lib/utils';
+import { APP_VERSION } from '@/version';
 import {
     LayoutDashboard, ArrowLeftRight, PiggyBank, Target,
     BarChart3, Settings, Menu, X, Wallet, Repeat, Bell,
@@ -97,9 +98,7 @@ export default function Layout({ children }) {
                     <div className="px-4 py-3 bg-muted/50 rounded-xl">
                         <p className="text-xs text-muted-foreground">Personal Finance</p>
                         <p className="text-xs text-muted-foreground/80 mt-1">
-                            Версия {typeof window !== 'undefined' && window.electronAPI
-                                ? '1.4.3'
-                                : '1.4.3'} • Все данные защищены
+                            Версия {APP_VERSION} • Все данные защищены
                         </p>
                     </div>
                 </div>

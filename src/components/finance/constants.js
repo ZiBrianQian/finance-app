@@ -11,6 +11,7 @@ export const CURRENCIES = [
     { code: 'UAH', symbol: '₴', name: 'Украинская гривна' },
     { code: 'KZT', symbol: '₸', name: 'Казахстанский тенге' },
     { code: 'BYN', symbol: 'Br', name: 'Белорусский рубль' },
+    { code: 'GEL', symbol: '₾', name: 'Грузинский лари' },
 ];
 
 export const DATE_FORMATS = [

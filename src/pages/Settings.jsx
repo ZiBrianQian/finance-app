@@ -20,6 +20,7 @@ import NotificationSettingsCard from '@/components/finance/NotificationSettings'
 import UpdateChecker from '@/components/finance/UpdateChecker';
 
 import { useLiveRates } from '@/components/finance/useFinanceData';
+import { APP_VERSION } from '@/version';
 
 export default function Settings() {
     const { accounts, allAccounts, createAccount, updateAccount, deleteAccount, setPrimaryAccount, reorderAccounts } = useAccounts();
@@ -329,7 +330,7 @@ export default function Settings() {
                     {/* Version info */}
                     <Card className="p-6 bg-card border-border">
                         <div className="text-center text-sm text-muted-foreground">
-                            <p>Personal Finance v1.0</p>
+                            <p>Personal Finance v{APP_VERSION}</p>
                             <p className="mt-1">Данные хранятся локально рядом с приложением</p>
                         </div>
                     </Card>
