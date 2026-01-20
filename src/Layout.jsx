@@ -98,8 +98,8 @@ export default function Layout({ children }) {
                         <p className="text-xs text-muted-foreground">Personal Finance</p>
                         <p className="text-xs text-muted-foreground/80 mt-1">
                             Версия {typeof window !== 'undefined' && window.electronAPI
-                                ? '1.4.1'
-                                : '1.4.1'} • Все данные защищены
+                                ? '1.4.3'
+                                : '1.4.3'} • Все данные защищены
                         </p>
                     </div>
                 </div>

@@ -22,7 +22,7 @@ import UpdateChecker from '@/components/finance/UpdateChecker';
 import { useLiveRates } from '@/components/finance/useFinanceData';
 
 export default function Settings() {
-    const { accounts, allAccounts, createAccount, updateAccount, deleteAccount } = useAccounts();
+    const { accounts, allAccounts, createAccount, updateAccount, deleteAccount, setPrimaryAccount, reorderAccounts } = useAccounts();
     const { categories, createCategory, updateCategory, deleteCategory } = useCategories();
     const { transactions, createTransaction } = useTransactions();
     const { budgets } = useBudgets();
@@ -353,6 +353,8 @@ export default function Settings() {
                 onCreate={(data) => createAccount.mutateAsync(data)}
                 onUpdate={({ id, data }) => updateAccount.mutateAsync({ id, data })}
                 onDelete={(id) => deleteAccount.mutateAsync(id)}
+                onSetPrimary={(id) => setPrimaryAccount.mutateAsync(id)}
+                onReorder={(orderedIds) => reorderAccounts.mutateAsync(orderedIds)}
                 defaultCurrency={settings?.defaultCurrency || 'USD'}
             />
 

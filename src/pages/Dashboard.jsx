@@ -415,7 +415,7 @@ export default function Dashboard() {
                             <h3 className="text-lg font-semibold text-foreground mb-4">Счета</h3>
                             {accounts.length > 0 ? (
                                 <div className="space-y-3">
-                                    {accounts.slice(0, 5).map(account => (
+                                    {accounts.slice(0, 10).map(account => (
                                         <AccountCard
                                             key={account.id}
                                             account={account}

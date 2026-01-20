@@ -9,6 +9,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Rocket, Download, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -153,40 +154,41 @@ export default function AutoUpdateDialog() {
                 <AlertDialogFooter>
                     {status === 'available' && (
                         <>
-                            <AlertDialogCancel onClick={handleDismiss}>
+                            <Button variant="outline" onClick={handleDismiss}>
                                 Позже
-                            </AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDownload}>
+                            </Button>
+                            <Button onClick={handleDownload}>
                                 <Download className="w-4 h-4 mr-2" />
                                 Скачать и установить
-                            </AlertDialogAction>
+                            </Button>
                         </>
                     )}
 
                     {status === 'downloading' && (
-                        <AlertDialogCancel disabled>
+                        <Button disabled>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             Скачивание...
-                        </AlertDialogCancel>
+                        </Button>
                     )}
 
                     {status === 'ready' && (
-                        <AlertDialogAction
+                        <Button
                             onClick={handleInstall}
                             className="bg-green-600 hover:bg-green-700"
                         >
                             <Rocket className="w-4 h-4 mr-2" />
                             Установить и перезапустить
-                        </AlertDialogAction>
+                        </Button>
                     )}
 
                     {status === 'error' && (
                         <>
-                            <AlertDialogCancel onClick={handleDismiss}>
+                            <Button variant="outline" onClick={handleDismiss}>
                                 Закрыть
-                            </AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDownload}>
+                            </Button>
+                            <Button onClick={handleDownload}>
                                 Попробовать снова
-                            </AlertDialogAction>
+                            </Button>
                         </>
                     )}
                 </AlertDialogFooter>

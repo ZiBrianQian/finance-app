@@ -30,7 +30,13 @@ export default function TransactionForm({
     const [currency, setCurrency] = useState(initialData?.currency || defaultCurrency);
     const [date, setDate] = useState(initialData?.date ? initialData.date : format(new Date(), 'yyyy-MM-dd'));
     const [categoryId, setCategoryId] = useState(initialData?.categoryId || '');
-    const [accountId, setAccountId] = useState(initialData?.accountId || accounts[0]?.id || '');
+    // Find primary account or fall back to first account
+    const getDefaultAccountId = () => {
+        if (initialData?.accountId) return initialData.accountId;
+        const primaryAccount = accounts.find(a => a.isPrimary);
+        return primaryAccount?.id || accounts[0]?.id || '';
+    };
+    const [accountId, setAccountId] = useState(getDefaultAccountId());
     const [toAccountId, setToAccountId] = useState(initialData?.toAccountId || '');
     const [merchant, setMerchant] = useState(initialData?.merchant || '');
     const [notes, setNotes] = useState(initialData?.notes || '');
@@ -43,7 +49,9 @@ export default function TransactionForm({
             setAmount('');
             setDate(format(new Date(), 'yyyy-MM-dd'));
             setCategoryId('');
-            setAccountId(accounts[0]?.id || '');
+            // Use primary account or first account as default
+            const primaryAccount = accounts.find(a => a.isPrimary);
+            setAccountId(primaryAccount?.id || accounts[0]?.id || '');
             setToAccountId('');
             setMerchant('');
             setNotes('');

@@ -60,8 +60,19 @@ export const useAccounts = () => {
         queryFn: () => entities.Account.list(),
     });
 
+    // Sort accounts by sortOrder (accounts without sortOrder go to end)
+    const sortedAccounts = [...accounts].sort((a, b) => {
+        const orderA = a.sortOrder ?? Number.MAX_SAFE_INTEGER;
+        const orderB = b.sortOrder ?? Number.MAX_SAFE_INTEGER;
+        return orderA - orderB;
+    });
+
     const createAccount = useMutation({
-        mutationFn: (data) => entities.Account.create(data),
+        mutationFn: async (data) => {
+            // Set sortOrder to be last if not provided
+            const maxOrder = accounts.reduce((max, acc) => Math.max(max, acc.sortOrder ?? 0), 0);
+            return entities.Account.create({ ...data, sortOrder: maxOrder + 1 });
+        },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accounts'] }),
     });
 
@@ -75,7 +86,49 @@ export const useAccounts = () => {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accounts'] }),
     });
 
-    return { accounts: accounts.filter(a => !a.isArchived), allAccounts: accounts, isLoading, createAccount, updateAccount, deleteAccount };
+    // Set an account as primary (only one can be primary)
+    const setPrimaryAccount = useMutation({
+        mutationFn: async (accountId) => {
+            // First, unset isPrimary for all accounts
+            await Promise.all(
+                accounts
+                    .filter(a => a.isPrimary)
+                    .map(a => entities.Account.update(a.id, { isPrimary: false }))
+            );
+            // Then set the new primary
+            if (accountId) {
+                await entities.Account.update(accountId, { isPrimary: true });
+            }
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+    });
+
+    // Reorder accounts by updating their sortOrder
+    const reorderAccounts = useMutation({
+        mutationFn: async (orderedIds) => {
+            await Promise.all(
+                orderedIds.map((id, index) =>
+                    entities.Account.update(id, { sortOrder: index })
+                )
+            );
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+    });
+
+    // Get primary account (for default selection)
+    const primaryAccount = sortedAccounts.find(a => a.isPrimary && !a.isArchived) || sortedAccounts.find(a => !a.isArchived);
+
+    return {
+        accounts: sortedAccounts.filter(a => !a.isArchived),
+        allAccounts: sortedAccounts,
+        primaryAccount,
+        isLoading,
+        createAccount,
+        updateAccount,
+        deleteAccount,
+        setPrimaryAccount,
+        reorderAccounts
+    };
 };
 
 export const useCategories = () => {

@@ -33,14 +33,21 @@ export default function BatchTransactionForm({
 }) {
     const [type, setType] = useState('expense');
     const [date, setDate] = useState(initialDate || format(new Date(), 'yyyy-MM-dd'));
-    const [accountId, setAccountId] = useState(accounts[0]?.id || '');
+    // Find primary account or fall back to first account
+    const getDefaultAccountId = () => {
+        const primaryAccount = accounts.find(a => a.isPrimary);
+        return primaryAccount?.id || accounts[0]?.id || '';
+    };
+    const [accountId, setAccountId] = useState(getDefaultAccountId());
     const [rows, setRows] = useState([emptyRow(), emptyRow(), emptyRow()]);
 
     useEffect(() => {
         if (open) {
             setType('expense');
             setDate(initialDate || format(new Date(), 'yyyy-MM-dd'));
-            setAccountId(accounts[0]?.id || '');
+            // Use primary account or first account as default
+            const primaryAccount = accounts.find(a => a.isPrimary);
+            setAccountId(primaryAccount?.id || accounts[0]?.id || '');
             setRows([emptyRow(), emptyRow(), emptyRow()]);
         }
     }, [open, accounts, initialDate]);

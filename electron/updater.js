@@ -24,6 +24,9 @@ let isDownloading = false;
 /**
  * Check GitHub for latest release
  */
+/**
+ * Check GitHub for latest releases (cumulative)
+ */
 async function checkForUpdates() {
     console.log('[Updater] Starting update check...');
     console.log('[Updater] Current version:', CURRENT_VERSION);
@@ -32,7 +35,7 @@ async function checkForUpdates() {
     return new Promise((resolve, reject) => {
         const options = {
             hostname: 'api.github.com',
-            path: `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`,
+            path: `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, // Changed from /releases/latest to /releases
             headers: {
                 'User-Agent': 'FinanceManager-Updater'
             }
@@ -53,32 +56,50 @@ async function checkForUpdates() {
                         return;
                     }
 
-                    const release = JSON.parse(data);
-                    const latestVersion = release.tag_name.replace('v', '');
+                    const releases = JSON.parse(data);
 
-                    console.log('[Updater] Latest version on GitHub:', latestVersion);
-                    console.log('[Updater] Assets count:', release.assets?.length);
+                    // Filter releases that are newer than current version
+                    const newReleases = releases.filter(release => {
+                        const version = release.tag_name.replace('v', '');
+                        return isNewerVersion(version, CURRENT_VERSION);
+                    });
 
-                    // Find portable exe asset
-                    const portableAsset = release.assets.find(
-                        a => a.name.toLowerCase().includes('portable') && a.name.endsWith('.exe')
-                    );
+                    // Sort by published_at desc (just in case, though GitHub usually does this)
+                    newReleases.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
-                    console.log('[Updater] Portable asset found:', portableAsset?.name);
+                    console.log(`[Updater] Found ${newReleases.length} new releases`);
 
-                    const isNewer = isNewerVersion(latestVersion, CURRENT_VERSION);
-                    console.log('[Updater] Is newer version:', isNewer);
+                    if (newReleases.length > 0) {
+                        const latestRelease = newReleases[0];
+                        const latestVersion = latestRelease.tag_name.replace('v', '');
 
-                    if (isNewer) {
+                        // Find portable exe asset from the LATEST release
+                        const portableAsset = latestRelease.assets.find(
+                            a => a.name.toLowerCase().includes('portable') && a.name.endsWith('.exe')
+                        );
+
+                        if (!portableAsset) {
+                            console.log('[Updater] No portable asset found in latest release');
+                            resolve({ updateAvailable: false, message: 'No portable asset found' });
+                            return;
+                        }
+
+                        // Aggregate release notes
+                        let aggregatedNotes = '';
+                        newReleases.forEach(release => {
+                            aggregatedNotes += `## ${release.tag_name} (${new Date(release.published_at).toLocaleDateString()})\n`;
+                            aggregatedNotes += `${release.body || 'No notes'}\n\n`;
+                        });
+
                         updateInfo = {
                             version: latestVersion,
-                            releaseNotes: release.body || 'No release notes',
-                            downloadUrl: portableAsset?.browser_download_url || null,
-                            publishedAt: release.published_at,
-                            assetName: portableAsset?.name || null
+                            releaseNotes: aggregatedNotes.trim(),
+                            downloadUrl: portableAsset.browser_download_url,
+                            publishedAt: latestRelease.published_at,
+                            assetName: portableAsset.name
                         };
 
-                        console.log('[Updater] Update available!', updateInfo);
+                        console.log('[Updater] Update available:', latestVersion);
 
                         resolve({
                             updateAvailable: true,
@@ -88,8 +109,7 @@ async function checkForUpdates() {
                         console.log('[Updater] No update needed');
                         resolve({
                             updateAvailable: false,
-                            currentVersion: CURRENT_VERSION,
-                            latestVersion
+                            currentVersion: CURRENT_VERSION
                         });
                     }
                 } catch (error) {

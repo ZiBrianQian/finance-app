@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Wallet, CreditCard, Building2, PiggyBank, Landmark } from 'lucide-react';
+import { Wallet, CreditCard, Building2, PiggyBank, Landmark, Star } from 'lucide-react';
 import { formatMoney } from './constants';
 
 const icons = {
@@ -11,7 +11,7 @@ const icons = {
     other: Landmark,
 };
 
-export default function AccountCard({ account, balance, onClick, compact = false }) {
+export default function AccountCard({ account, balance, onClick, compact = false, showPrimary = true }) {
     const Icon = icons[account.type] || Wallet;
     const isNegative = balance < 0;
 
@@ -29,7 +29,12 @@ export default function AccountCard({ account, balance, onClick, compact = false
                         <Icon className="w-5 h-5" style={{ color: account.color || '#64748b' }} />
                     </div>
                     <div>
-                        <p className="font-medium text-foreground">{account.name}</p>
+                        <div className="flex items-center gap-1.5">
+                            <p className="font-medium text-foreground">{account.name}</p>
+                            {showPrimary && account.isPrimary && (
+                                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                            )}
+                        </div>
                         <p className="text-xs text-muted-foreground">{account.currency}</p>
                     </div>
                 </div>
@@ -52,6 +57,9 @@ export default function AccountCard({ account, balance, onClick, compact = false
                 >
                     <Icon className="w-6 h-6" style={{ color: account.color || '#64748b' }} />
                 </div>
+                {showPrimary && account.isPrimary && (
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                )}
             </div>
             <p className="text-sm text-muted-foreground mb-1">{account.name}</p>
             <p className={`text-2xl font-bold ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
