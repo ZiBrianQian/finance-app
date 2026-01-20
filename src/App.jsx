@@ -14,6 +14,7 @@ import Settings from './pages/Settings';
 import Calendar from './pages/Calendar';
 import Debts from './pages/Debts';
 import Subscriptions from './pages/Subscriptions';
+import AutoUpdateDialog from '@/components/finance/AutoUpdateDialog';
 
 
 const queryClient = new QueryClient({
@@ -46,6 +47,7 @@ function ThemeInitializer() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <AutoUpdateDialog />
       <Router>
         <Layout>
           <ThemeInitializer />

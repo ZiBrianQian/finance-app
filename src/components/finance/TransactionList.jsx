@@ -1,7 +1,7 @@
 import React from 'react';
 import { format, parseISO, isToday, isYesterday } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, MoreHorizontal, Pencil, Trash2, HandCoins } from 'lucide-react';
 import { formatMoney, CURRENCIES } from './constants';
 import { useLiveRates, convertCurrency, useAppSettings } from './useFinanceData';
 import CategoryIcon from './CategoryIcon';
@@ -118,15 +118,29 @@ export default function TransactionList({
                                             style={{
                                                 backgroundColor: tx.type === 'transfer'
                                                     ? 'rgb(59 130 246 / 0.15)'
-                                                    : category?.color ? `${category.color}15` : 'var(--muted)'
+                                                    : tx.debtId
+                                                        ? tx.type === 'income'
+                                                            ? 'rgb(34 197 94 / 0.15)'  // Green for debt returned to me
+                                                            : 'rgb(239 68 68 / 0.15)'  // Red for debt I paid
+                                                        : category?.color ? `${category.color}15` : 'var(--muted)'
                                             }}
                                         >
                                             {tx.type === 'transfer' ? (
                                                 <ArrowLeftRight className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                            ) : tx.debtId ? (
+                                                <HandCoins className={`w-5 h-5 ${tx.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
                                             ) : tx.type === 'income' ? (
-                                                <ArrowDownLeft className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                                category?.icon ? (
+                                                    <CategoryIcon icon={category.icon} color={category.color} size={20} className="w-10 h-10" />
+                                                ) : (
+                                                    <ArrowDownLeft className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                                )
                                             ) : (
-                                                <CategoryIcon icon={category?.icon} color={category?.color} size={20} className="w-10 h-10" />
+                                                category?.icon ? (
+                                                    <CategoryIcon icon={category.icon} color={category.color} size={20} className="w-10 h-10" />
+                                                ) : (
+                                                    <ArrowUpRight className="w-5 h-5 text-red-600 dark:text-red-400" />
+                                                )
                                             )}
                                         </div>
 

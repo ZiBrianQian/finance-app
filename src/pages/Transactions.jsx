@@ -11,7 +11,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import { useAccounts, useCategories, useTransactions, useAppSettings, usePeriod, filterTransactionsByPeriod } from '@/components/finance/useFinanceData';
+import { useAccounts, useCategories, useTransactions, useDebts, useAppSettings, usePeriod, filterTransactionsByPeriod } from '@/components/finance/useFinanceData';
 import PeriodSelector from '@/components/finance/PeriodSelector';
 import TransactionList from '@/components/finance/TransactionList';
 import TransactionForm from '@/components/finance/TransactionForm';
@@ -20,6 +20,7 @@ export default function Transactions() {
     const { accounts } = useAccounts();
     const { categories } = useCategories();
     const { transactions, createTransaction, updateTransaction, deleteTransaction, bulkUpdate, bulkDelete } = useTransactions();
+    const { debts, updateDebt } = useDebts();
     const { settings } = useAppSettings();
     const { period, setPeriod, customRange, setCustomRange, getDateRange } = usePeriod('month');
 
@@ -100,6 +101,29 @@ export default function Transactions() {
 
     const confirmDelete = async () => {
         if (deleteId) {
+            // Find the transaction to check if it's linked to a debt
+            const txToDelete = transactions.find(t => t.id === deleteId);
+
+            // If transaction is linked to a debt, update the debt's payments
+            if (txToDelete?.debtId) {
+                const linkedDebt = debts.find(d => d.id === txToDelete.debtId);
+                if (linkedDebt) {
+                    // Remove the payment that has this transactionId
+                    const updatedPayments = (linkedDebt.payments || []).filter(
+                        p => p.transactionId !== deleteId
+                    );
+
+                    // Recalculate if debt is paid
+                    const totalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
+                    const isPaid = totalPaid >= linkedDebt.amount;
+
+                    await updateDebt.mutateAsync({
+                        id: linkedDebt.id,
+                        data: { payments: updatedPayments, isPaid }
+                    });
+                }
+            }
+
             await deleteTransaction.mutateAsync(deleteId);
             toast.success('Транзакция удалена');
             setDeleteId(null);

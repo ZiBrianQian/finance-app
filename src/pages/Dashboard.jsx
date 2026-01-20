@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownLeft, Bell, AlertTriangle, X } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownLeft, Bell, AlertTriangle, X, Target, HandCoins } from 'lucide-react';
 import { format, eachDayOfInterval, parseISO, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -11,8 +11,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 import {
     useAccounts, useCategories, useTransactions, useBudgets, useAppSettings, useRecurringRules,
-    usePeriod, calculateAccountBalance, filterTransactionsByPeriod, calculatePeriodStats, convertCurrency, useLiveRates
+    usePeriod, calculateAccountBalance, filterTransactionsByPeriod, calculatePeriodStats, convertCurrency, useLiveRates,
+    useGoals, useDebts
 } from '@/components/finance/useFinanceData';
+import { Progress } from '@/components/ui/progress';
 import { formatMoney, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '@/components/finance/constants';
 import PeriodSelector from '@/components/finance/PeriodSelector';
 import AccountCard from '@/components/finance/AccountCard';
@@ -30,6 +32,8 @@ export default function Dashboard() {
     const { transactions, createTransaction } = useTransactions();
     const { budgets } = useBudgets();
     const { rules } = useRecurringRules();
+    const { goals } = useGoals();
+    const { debts } = useDebts();
     const { settings, isLoading: settingsLoading, updateSettings } = useAppSettings();
     const { rates, isLoading: ratesLoading, lastUpdated: ratesUpdated } = useLiveRates(settings?.defaultCurrency || 'USD');
     const { period, setPeriod, customRange, setCustomRange, getDateRange, getPrevDateRange } = usePeriod('month');
@@ -295,6 +299,100 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left column */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* Goals and Debts row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Goals widget */}
+                            <Card className="p-5 bg-card border-border">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                                        <Target className="w-4 h-4 text-blue-500" />
+                                        Цели
+                                    </h3>
+                                    <Link to="/goals" className="text-xs text-primary hover:underline">
+                                        Все →
+                                    </Link>
+                                </div>
+                                {goals.filter(g => !g.isCompleted).length > 0 ? (
+                                    <div className="space-y-3">
+                                        {goals
+                                            .filter(g => !g.isCompleted)
+                                            .slice(0, 5)
+                                            .map(goal => {
+                                                const percent = goal.targetAmount > 0
+                                                    ? Math.round((goal.currentAmount / goal.targetAmount) * 100)
+                                                    : 0;
+                                                return (
+                                                    <Link to="/goals" key={goal.id} className="block">
+                                                        <div className="p-2.5 rounded-lg bg-muted/30 border border-border hover:bg-accent/50 transition-colors">
+                                                            <div className="flex items-center justify-between mb-1.5">
+                                                                <span className="font-medium text-sm text-foreground truncate">{goal.name}</span>
+                                                                <span className="text-xs font-semibold text-primary">{percent}%</span>
+                                                            </div>
+                                                            <Progress value={Math.min(percent, 100)} className="h-1.5 mb-1.5" />
+                                                            <div className="flex justify-between text-xs text-muted-foreground">
+                                                                <span>{formatMoney(goal.currentAmount, goal.currency)}</span>
+                                                                <span>{formatMoney(goal.targetAmount, goal.currency)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </Link>
+                                                );
+                                            })}
+                                    </div>
+                                ) : (
+                                    <p className="text-center py-4 text-muted-foreground text-sm">
+                                        Нет активных целей
+                                    </p>
+                                )}
+                            </Card>
+
+                            {/* Debts widget */}
+                            <Card className="p-5 bg-card border-border">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                                        <HandCoins className="w-4 h-4 text-amber-500" />
+                                        Долги
+                                    </h3>
+                                    <Link to="/debts" className="text-xs text-primary hover:underline">
+                                        Все →
+                                    </Link>
+                                </div>
+                                {debts.filter(d => !d.isPaid).length > 0 ? (
+                                    <div className="space-y-2">
+                                        {debts
+                                            .filter(d => !d.isPaid)
+                                            .slice(0, 5)
+                                            .map(debt => {
+                                                const isOweMe = debt.type === 'owe_me';
+                                                const totalPaid = (debt.payments || []).reduce((s, p) => s + p.amount, 0);
+                                                const remaining = debt.amount - totalPaid;
+                                                return (
+                                                    <Link to="/debts" key={debt.id} className="block">
+                                                        <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-muted/30 border border-border hover:bg-accent/50 transition-colors">
+                                                            <div className={`p-1.5 rounded-md ${isOweMe ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40' : 'bg-red-100 text-red-600 dark:bg-red-900/40'}`}>
+                                                                {isOweMe ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownLeft className="w-3.5 h-3.5" />}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium text-sm text-foreground truncate">{debt.name}</p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {isOweMe ? 'Вам должны' : 'Вы должны'}
+                                                                </p>
+                                                            </div>
+                                                            <span className={`font-semibold text-sm ${isOweMe ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                                {isOweMe ? '+' : '-'}{formatMoney(remaining, debt.currency || settings?.defaultCurrency)}
+                                                            </span>
+                                                        </div>
+                                                    </Link>
+                                                );
+                                            })}
+                                    </div>
+                                ) : (
+                                    <p className="text-center py-4 text-muted-foreground text-sm">
+                                        Нет активных долгов
+                                    </p>
+                                )}
+                            </Card>
+                        </div>
+
                         {/* Balance chart */}
                         <Card className="p-6 bg-card border-border">
                             <h3 className="text-lg font-semibold text-foreground mb-4">Динамика баланса</h3>

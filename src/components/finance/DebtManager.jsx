@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useDebts, useAppSettings, useLiveRates, convertCurrency } from './useFinanceData';
+import { useDebts, useAccounts, useTransactions, useAppSettings, useLiveRates, convertCurrency } from './useFinanceData';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Plus, Trash2, Edit2, CheckCircle, XCircle, ArrowUpRight, ArrowDownLeft, Wallet, CalendarIcon, DollarSign, History } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -25,6 +25,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 export default function DebtManager() {
     const { debts, createDebt, updateDebt, deleteDebt } = useDebts();
     const { settings } = useAppSettings();
+    const { accounts } = useAccounts();
+    const { createTransaction } = useTransactions();
     const { rates } = useLiveRates(settings?.defaultCurrency);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingDebt, setEditingDebt] = useState(null);
@@ -35,6 +37,9 @@ export default function DebtManager() {
     const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
     const [paymentDebt, setPaymentDebt] = useState(null);
     const [paymentAmount, setPaymentAmount] = useState('');
+    const [paymentAccountId, setPaymentAccountId] = useState('');
+    const [paymentDate, setPaymentDate] = useState(new Date());
+    const [paymentDateOpen, setPaymentDateOpen] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -115,17 +120,42 @@ export default function DebtManager() {
     const openPaymentDialog = (debt) => {
         setPaymentDebt(debt);
         setPaymentAmount('');
+        setPaymentAccountId(accounts.length > 0 ? accounts[0].id : '');
+        setPaymentDate(new Date());
         setPaymentDialogOpen(true);
     };
 
     const handleAddPayment = async () => {
-        if (!paymentDebt || !paymentAmount) return;
+        if (!paymentDebt || !paymentAmount || !paymentAccountId) return;
 
         const paymentCents = parseMoney(paymentAmount);
+        const paymentDateStr = format(paymentDate, 'yyyy-MM-dd');
+
+        // Create transaction linked to debt
+        const transactionType = paymentDebt.type === 'owe_me' ? 'income' : 'expense';
+        const merchantName = paymentDebt.type === 'owe_me'
+            ? `Возврат долга от ${paymentDebt.name}`
+            : `Погашение долга: ${paymentDebt.name}`;
+        const transactionData = {
+            type: transactionType,
+            amount: paymentCents,
+            currency: paymentDebt.currency || settings?.defaultCurrency || 'USD',
+            date: paymentDateStr,
+            accountId: paymentAccountId,
+            debtId: paymentDebt.id,
+            merchant: merchantName,
+            notes: '',
+            categoryId: null,
+        };
+
+        // Create the transaction
+        const createdTx = await createTransaction.mutateAsync(transactionData);
+
         const newPayment = {
             id: Date.now(),
             amount: paymentCents,
-            date: format(new Date(), 'yyyy-MM-dd'),
+            date: paymentDateStr,
+            transactionId: createdTx.id,
         };
 
         const existingPayments = paymentDebt.payments || [];
@@ -450,11 +480,57 @@ export default function DebtManager() {
                                 />
                             </div>
 
+                            <div className="space-y-2">
+                                <Label>Счёт</Label>
+                                <Select
+                                    value={paymentAccountId}
+                                    onValueChange={setPaymentAccountId}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Выберите счёт" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {accounts.filter(a => !a.isArchived).map(account => (
+                                            <SelectItem key={account.id} value={account.id}>
+                                                {account.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Дата платежа</Label>
+                                <Popover open={paymentDateOpen} onOpenChange={setPaymentDateOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start">
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {format(paymentDate, 'd MMM yyyy', { locale: ru })}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                            mode="single"
+                                            selected={paymentDate}
+                                            onSelect={(d) => { if (d) { setPaymentDate(d); setPaymentDateOpen(false); } }}
+                                            locale={ru}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="p-3 bg-blue-500/10 rounded-lg text-sm text-blue-600 dark:text-blue-400">
+                                {paymentDebt.type === 'owe_me'
+                                    ? '💰 Будет создана транзакция дохода на выбранный счёт'
+                                    : '💸 Будет создана транзакция расхода с выбранного счёта'
+                                }
+                            </div>
+
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>Отмена</Button>
                                 <Button
                                     onClick={handleAddPayment}
-                                    disabled={!paymentAmount || parseMoney(paymentAmount) <= 0}
+                                    disabled={!paymentAmount || parseMoney(paymentAmount) <= 0 || !paymentAccountId}
                                     className="bg-emerald-600 hover:bg-emerald-700"
                                 >
                                     <DollarSign className="w-4 h-4 mr-2" />

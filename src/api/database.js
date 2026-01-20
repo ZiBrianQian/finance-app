@@ -48,6 +48,22 @@ db.version(3).stores({
     debts: 'id, name, amount, currency, type, dueDate, notes, isPaid, createdDate'
 });
 
+// Version 4: Add debtId to transactions for debt-transaction linking
+db.version(4).stores({
+    accounts: 'id, name, type, currency, isArchived, groupId, initialBalance, icon, color',
+    accountGroups: 'id, name',
+    categories: 'id, name, type, icon, color, isArchived, parentId',
+    transactions: 'id, type, amount, currency, date, categoryId, accountId, toAccountId, debtId, merchant, notes, paymentMethod, isRecurringInstance, recurringRuleId',
+    budgets: 'id, name, isActive, period, startDate, endDate',
+    goals: 'id, name, targetAmount, currentAmount, deadline, accountId, status, priority, color',
+    recurringRules: 'id, title, type, amount, currency, categoryId, accountId, frequency, nextRunDate, isActive',
+    notifications: 'id, type, title, message, isRead, data, created_date',
+    notificationSettings: 'id',
+    appSettings: 'id, defaultCurrency, dateFormat, theme, onboardingCompleted',
+    exchangeRates: 'base, rates, lastUpdated',
+    debts: 'id, name, amount, currency, type, dueDate, notes, isPaid, createdDate'
+});
+
 // Генерируем уникальный ID
 function generateId() {
     return crypto.randomUUID();
