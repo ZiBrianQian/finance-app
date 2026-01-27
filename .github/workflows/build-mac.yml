@@ -6,6 +6,9 @@ on:
     tags:
       - 'v*'  # Trigger on version tags
 
+permissions:
+  contents: write  # Required for uploading release assets
+
 jobs:
   build-mac:
     runs-on: macos-latest
