@@ -85,6 +85,82 @@ function generateId() {
     return crypto.randomUUID();
 }
 
+// ========== VALIDATION FUNCTIONS ==========
+
+/**
+ * Validate transaction data
+ * @throws {Error} if validation fails
+ */
+function validateTransaction(data) {
+    const errors = [];
+
+    // Required fields
+    if (!data.type || !['income', 'expense', 'transfer'].includes(data.type)) {
+        errors.push('type must be "income", "expense", or "transfer"');
+    }
+    if (typeof data.amount !== 'number' || data.amount < 0) {
+        errors.push('amount must be a non-negative number');
+    }
+    if (!data.date || !/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
+        errors.push('date must be in YYYY-MM-DD format');
+    }
+    if (!data.accountId) {
+        errors.push('accountId is required');
+    }
+
+    // Transfer-specific validation
+    if (data.type === 'transfer' && !data.toAccountId) {
+        errors.push('toAccountId is required for transfers');
+    }
+
+    if (errors.length > 0) {
+        throw new Error(`Transaction validation failed: ${errors.join('; ')}`);
+    }
+}
+
+/**
+ * Validate account data
+ * @throws {Error} if validation fails
+ */
+function validateAccount(data) {
+    const errors = [];
+
+    if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
+        errors.push('name is required and must be a non-empty string');
+    }
+    if (!data.type) {
+        errors.push('type is required');
+    }
+    if (data.initialBalance !== undefined && typeof data.initialBalance !== 'number') {
+        errors.push('initialBalance must be a number');
+    }
+
+    if (errors.length > 0) {
+        throw new Error(`Account validation failed: ${errors.join('; ')}`);
+    }
+}
+
+/**
+ * Validate category data
+ * @throws {Error} if validation fails
+ */
+function validateCategory(data) {
+    const errors = [];
+
+    if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
+        errors.push('name is required and must be a non-empty string');
+    }
+    if (!data.type || !['income', 'expense'].includes(data.type)) {
+        errors.push('type must be "income" or "expense"');
+    }
+
+    if (errors.length > 0) {
+        throw new Error(`Category validation failed: ${errors.join('; ')}`);
+    }
+}
+
+// ========================================
+
 // CRUD операции для всех сущностей
 export const entities = {
     Account: {
@@ -92,6 +168,7 @@ export const entities = {
             return await db.accounts.toArray();
         },
         create: async (data) => {
+            validateAccount(data);
             const id = generateId();
             await db.accounts.add({ ...data, id });
             return { ...data, id };
@@ -128,6 +205,7 @@ export const entities = {
             return await db.categories.toArray();
         },
         create: async (data) => {
+            validateCategory(data);
             const id = generateId();
             await db.categories.add({ ...data, id });
             return { ...data, id };
@@ -154,6 +232,7 @@ export const entities = {
             return results.slice(0, limit);
         },
         create: async (data) => {
+            validateTransaction(data);
             const id = generateId();
             await db.transactions.add({ ...data, id });
             return { ...data, id };

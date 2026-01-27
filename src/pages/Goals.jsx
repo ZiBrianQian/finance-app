@@ -17,7 +17,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import { useGoals, useAccounts, useAppSettings, convertCurrency } from '@/components/finance/useFinanceData';
+import { useGoals, useAccounts, useAppSettings } from '@/components/finance/useFinanceData';
 import { formatMoney, parseMoney } from '@/components/finance/constants';
 import GoalCard from '@/components/finance/GoalCard';
 import GoalForm from '@/components/finance/GoalForm';

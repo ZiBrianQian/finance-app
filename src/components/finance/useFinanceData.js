@@ -19,8 +19,12 @@ export const usePeriod = (defaultPeriod = 'month') => {
             case 'month':
                 return { start: startOfMonth(today), end: endOfMonth(today) };
             case 'quarter':
-                const quarterStart = startOfMonth(subMonths(today, 2));
-                return { start: quarterStart, end: endOfMonth(today) };
+                // Calculate actual financial quarter (Q1: Jan-Mar, Q2: Apr-Jun, Q3: Jul-Sep, Q4: Oct-Dec)
+                const currentMonth = today.getMonth();
+                const quarterStartMonth = Math.floor(currentMonth / 3) * 3;
+                const quarterStartDate = new Date(today.getFullYear(), quarterStartMonth, 1);
+                const quarterEndDate = endOfMonth(new Date(today.getFullYear(), quarterStartMonth + 2, 1));
+                return { start: quarterStartDate, end: quarterEndDate };
             case 'year':
                 return { start: startOfYear(today), end: endOfYear(today) };
             case 'all':
@@ -415,27 +419,35 @@ export const calculateAccountBalance = (account, transactions, rates = {}) => {
     let balance = account.initialBalance || 0;
 
     accountTxs.forEach(tx => {
-        // Determine transaction currency (fallback to account currency if missing)
         const txCurrency = tx.currency || account.currency || 'USD';
         const accountCurrency = account.currency || 'USD';
 
-        // Convert amount to account's currency
-        const amountInAccountCurrency = convertCurrency(tx.amount, txCurrency, accountCurrency, rates);
+        // Helper: convert using saved exchange rate if available
+        const convertAmount = (amount, fromCurrency, toCurrency) => {
+            if (fromCurrency === toCurrency) return amount;
+
+            if (tx.exchangeRate && tx.exchangeRateBase) {
+                if (fromCurrency === txCurrency && toCurrency === tx.exchangeRateBase) {
+                    return Math.round(amount * tx.exchangeRate);
+                }
+                if (fromCurrency === tx.exchangeRateBase && toCurrency === txCurrency) {
+                    return Math.round(amount / tx.exchangeRate);
+                }
+            }
+
+            return convertCurrency(amount, fromCurrency, toCurrency, rates);
+        };
 
         if (tx.type === 'income' && tx.accountId === account.id) {
-            balance += amountInAccountCurrency;
+            balance += convertAmount(tx.amount, txCurrency, accountCurrency);
         } else if (tx.type === 'expense' && tx.accountId === account.id) {
-            balance -= amountInAccountCurrency;
+            balance -= convertAmount(tx.amount, txCurrency, accountCurrency);
         } else if (tx.type === 'transfer') {
             if (tx.accountId === account.id) {
-                // Outgoing transfer: amount is in txCurrency (usually source currency)
-                // Convert to source account currency
-                balance -= convertCurrency(tx.amount, txCurrency, accountCurrency, rates);
+                balance -= convertAmount(tx.amount, txCurrency, accountCurrency);
             }
             if (tx.toAccountId === account.id) {
-                // Incoming transfer: amount is in txCurrency
-                // Convert to destination account currency
-                balance += convertCurrency(tx.amount, txCurrency, accountCurrency, rates);
+                balance += convertAmount(tx.amount, txCurrency, accountCurrency);
             }
         }
     });
@@ -511,8 +523,6 @@ export const convertCurrency = (amount, fromCurrency, toCurrency, rates = {}) =>
     const fromRate = rates[fromCurrency] || 1;
     const toRate = rates[toCurrency] || 1;
 
-    // Convert: amount in FROM -> base -> TO
-    // amount / fromRate gives base, * toRate gives TO
     return Math.round(amount / fromRate * toRate);
 };
 
@@ -522,13 +532,36 @@ export const convertCurrency = (amount, fromCurrency, toCurrency, rates = {}) =>
 export const calculatePeriodStats = (transactions, startDate, endDate, targetCurrency, rates = {}) => {
     const filtered = filterTransactionsByPeriod(transactions, startDate, endDate);
 
+    // Helper function: convert using saved exchange rate if available
+    const convertTx = (tx) => {
+        const txCurrency = tx.currency || targetCurrency || 'USD';
+        const target = targetCurrency || 'USD';
+
+        if (txCurrency === target) return tx.amount;
+
+        // Use saved exchange rate if available
+        if (tx.exchangeRate && tx.exchangeRateBase) {
+            if (txCurrency !== target && target === tx.exchangeRateBase) {
+                // Converting to the base currency that was saved
+                return Math.round(tx.amount * tx.exchangeRate);
+            }
+            if (txCurrency === tx.exchangeRateBase && target !== txCurrency) {
+                // Converting from base currency
+                return Math.round(tx.amount / tx.exchangeRate);
+            }
+        }
+
+        // Fallback to live rates
+        return convertCurrency(tx.amount, txCurrency, target, rates);
+    };
+
     const income = filtered
         .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || targetCurrency || 'USD', targetCurrency || 'USD', rates), 0);
+        .reduce((sum, t) => sum + convertTx(t), 0);
 
     const expense = filtered
         .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || targetCurrency || 'USD', targetCurrency || 'USD', rates), 0);
+        .reduce((sum, t) => sum + convertTx(t), 0);
 
     return { income, expense, net: income - expense, count: filtered.length };
 };

@@ -21,6 +21,11 @@ export const DATE_FORMATS = [
     { value: 'DD.MM.YYYY', label: 'DD.MM.YYYY (31.01.2024)' },
 ];
 
+export const LANGUAGES = [
+    { code: 'ru', label: 'Русский', locale: 'ru' },
+    { code: 'en', label: 'English', locale: 'enUS' },
+];
+
 export const ACCOUNT_TYPES = [
     { value: 'cash', label: 'Наличные', icon: 'Wallet' },
     { value: 'card', label: 'Карта', icon: 'CreditCard' },

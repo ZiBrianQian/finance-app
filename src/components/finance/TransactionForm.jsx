@@ -56,7 +56,7 @@ export default function TransactionForm({
             setMerchant('');
             setNotes('');
         }
-    }, [open, accounts, initialData]);
+    }, [open, accounts, initialData, defaultCurrency]);
 
     useEffect(() => {
         if (initialData?.type) {
@@ -79,6 +79,21 @@ export default function TransactionForm({
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Валидация обязательных полей
+        if (!accountId) {
+            return; // Счёт не выбран
+        }
+        if (type === 'transfer' && !toAccountId) {
+            return; // Для перевода нужен счёт назначения
+        }
+        if (type !== 'transfer' && !categoryId) {
+            return; // Для дохода/расхода нужна категория
+        }
+        if (!amount || parseMoney(amount) <= 0) {
+            return; // Сумма должна быть положительной
+        }
+
         const data = {
             type,
             amount: parseMoney(amount),
@@ -135,7 +150,6 @@ export default function TransactionForm({
 
                     <div className="grid grid-cols-3 gap-3">
                         <div className="col-span-2">
-                            <Label className="text-xs text-slate-500">Сумма</Label>
                             <Label className="text-xs text-slate-500">Сумма</Label>
                             <MoneyInput
                                 placeholder="0.00"

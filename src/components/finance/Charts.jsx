@@ -31,8 +31,9 @@ export function BalanceLineChart({ data, currency }) {
                 <Tooltip
                     formatter={(value) => [formatMoney(value, currency), 'Баланс']}
                     contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #e2e8f0',
+                        backgroundColor: 'var(--popover)',
+                        color: 'var(--popover-foreground)',
+                        border: '1px solid var(--border)',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                     }}
@@ -82,8 +83,9 @@ export function IncomeExpenseChart({ data, currency }) {
                         name === 'income' ? 'Доходы' : 'Расходы'
                     ]}
                     contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #e2e8f0',
+                        backgroundColor: 'var(--popover)',
+                        color: 'var(--popover-foreground)',
+                        border: '1px solid var(--border)',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                     }}
@@ -133,8 +135,9 @@ export function CategoryPieChart({ data, currency }) {
                     <Tooltip
                         formatter={(value) => [formatMoney(value, currency), '']}
                         contentStyle={{
-                            backgroundColor: 'white',
-                            border: '1px solid #e2e8f0',
+                            backgroundColor: 'var(--popover)',
+                            color: 'var(--popover-foreground)',
+                            border: '1px solid var(--border)',
                             borderRadius: '8px',
                             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                         }}

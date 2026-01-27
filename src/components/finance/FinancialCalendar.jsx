@@ -71,8 +71,8 @@ export default function FinancialCalendar() {
     const selectedDayData = getDayData(selectedDate);
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-100px)]">
-            <Card className="flex-1 flex flex-col h-full border-none shadow-none bg-transparent">
+        <div className="flex flex-col lg:flex-row gap-6 min-h-[calc(100vh-8rem)]">
+            <Card className="flex-1 flex flex-col border-none shadow-none bg-transparent">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h2 className="text-2xl font-bold capitalize">
@@ -97,7 +97,7 @@ export default function FinancialCalendar() {
                     ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-1 lg:gap-2 flex-1 auto-rows-fr">
+                <div className="grid grid-cols-7 gap-1 lg:gap-2 flex-1">
                     {calendarDays.map((day) => {
                         const { income, expense, projected } = getDayData(day);
                         const isSelected = isSameDay(day, selectedDate);
@@ -110,7 +110,7 @@ export default function FinancialCalendar() {
                                 onClick={() => setSelectedDate(day)}
                                 className={`
                                     relative p-2 rounded-xl cursor-pointer transition-all border
-                                    flex flex-col justify-between min-h-[80px]
+                                    flex flex-col justify-between min-h-[100px] lg:min-h-[90px]
                                     ${!isCurrentMonth ? 'opacity-30 bg-muted/20 border-transparent' : 'bg-card border-border'}
                                     ${isSelected ? 'ring-2 ring-primary border-primary bg-primary/5' : 'hover:border-primary/50'}
                                     ${isTodayDate ? 'bg-accent/50' : ''}
@@ -148,7 +148,7 @@ export default function FinancialCalendar() {
                 </div>
             </Card>
 
-            <Card className="w-full lg:w-96 flex flex-col h-full overflow-hidden border-l border-border bg-card/50 backdrop-blur-sm">
+            <Card className="w-full lg:w-96 lg:max-h-[calc(100vh-8rem)] flex flex-col overflow-hidden border-l border-border bg-card/50 backdrop-blur-sm">
                 <CardHeader className="border-b bg-card">
                     <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-2">

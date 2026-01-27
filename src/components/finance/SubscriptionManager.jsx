@@ -193,17 +193,19 @@ export default function SubscriptionManager() {
                                             </p>
                                         </div>
 
-                                        {sub.frequency === 'monthly' && (
-                                            <div className="space-y-1.5 pt-2 border-t border-border/50">
-                                                <div className="flex justify-between text-[10px] text-muted-foreground">
-                                                    <span>Прогресс периода</span>
-                                                    <span>Осталось {
-                                                        Math.max(0, Math.ceil((new Date(sub.nextRunDate) - new Date()) / (1000 * 60 * 60 * 24)))
-                                                    } дн.</span>
+                                        {sub.frequency === 'monthly' && (() => {
+                                            const daysRemaining = Math.max(0, Math.ceil((new Date(sub.nextRunDate) - new Date()) / (1000 * 60 * 60 * 24)));
+                                            const progressValue = Math.min(100, Math.max(0, ((30 - daysRemaining) / 30) * 100));
+                                            return (
+                                                <div className="space-y-1.5 pt-2 border-t border-border/50">
+                                                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                                                        <span>Прогресс периода</span>
+                                                        <span>Осталось {daysRemaining} дн.</span>
+                                                    </div>
+                                                    <Progress value={progressValue} className="h-1.5" indicatorClassName="bg-purple-500" />
                                                 </div>
-                                                <Progress value={Math.random() * 100} className="h-1.5" indicatorClassName="bg-purple-500" />
-                                            </div>
-                                        )}
+                                            );
+                                        })()}
                                     </CardContent>
                                 </Card>
                             ))

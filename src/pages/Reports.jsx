@@ -73,32 +73,27 @@ export default function Reports() {
         }
     }, [compareEnabled, compareType, mainRange, customCompareRange]);
 
-    const filteredTransactions = useMemo(() => {
-        let result = filterTransactionsByPeriod(transactions, mainRange.start, mainRange.end);
-
+    // Helper function to apply account and currency filters
+    const applyFilters = (txList) => {
+        let result = txList;
         if (accountFilter !== 'all') {
             result = result.filter(t => t.accountId === accountFilter);
         }
         if (currencyFilter !== 'all') {
             result = result.filter(t => t.currency === currencyFilter);
         }
-
         return result;
+    };
+
+    const filteredTransactions = useMemo(() => {
+        const periodTxs = filterTransactionsByPeriod(transactions, mainRange.start, mainRange.end);
+        return applyFilters(periodTxs);
     }, [transactions, mainRange, accountFilter, currencyFilter]);
 
     const compareFilteredTransactions = useMemo(() => {
         if (!compareRange) return [];
-
-        let result = filterTransactionsByPeriod(transactions, compareRange.start, compareRange.end);
-
-        if (accountFilter !== 'all') {
-            result = result.filter(t => t.accountId === accountFilter);
-        }
-        if (currencyFilter !== 'all') {
-            result = result.filter(t => t.currency === currencyFilter);
-        }
-
-        return result;
+        const periodTxs = filterTransactionsByPeriod(transactions, compareRange.start, compareRange.end);
+        return applyFilters(periodTxs);
     }, [transactions, compareRange, accountFilter, currencyFilter]);
 
     const currentStats = useMemo(() =>
@@ -397,10 +392,10 @@ export default function Reports() {
                                                 <TrendingDown className={`w-4 h-4 ${reportType === 'expenses' ? 'text-green-500' : 'text-red-500'}`} />
                                             ) : null}
                                             <span className={`text-sm font-medium ${change > 0
-                                                    ? (reportType === 'expenses' ? 'text-red-600' : 'text-green-600')
-                                                    : change < 0
-                                                        ? (reportType === 'expenses' ? 'text-green-600' : 'text-red-600')
-                                                        : 'text-muted-foreground'
+                                                ? (reportType === 'expenses' ? 'text-red-600' : 'text-green-600')
+                                                : change < 0
+                                                    ? (reportType === 'expenses' ? 'text-green-600' : 'text-red-600')
+                                                    : 'text-muted-foreground'
                                                 }`}>
                                                 {change > 0 ? '+' : ''}{change.toFixed(1)}%
                                             </span>
@@ -467,8 +462,8 @@ export default function Reports() {
                     <Card className="p-6 bg-card border-border">
                         <h3 className="text-lg font-semibold text-foreground mb-4">Детализация</h3>
                         <div className="space-y-3">
-                            {categoryData.map((cat, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
+                            {categoryData.map((cat) => (
+                                <div key={cat.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                                     <div className="flex items-center gap-3">
                                         <CategoryIcon icon={cat.icon} color={cat.color} size={18} className="w-9 h-9" />
                                         <div>
@@ -501,8 +496,8 @@ export default function Reports() {
                         </div>
                         {compareEnabled ? (
                             <div className="space-y-3">
-                                {comparisonData.slice(0, 8).map((cat, i) => (
-                                    <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
+                                {comparisonData.slice(0, 8).map((cat) => (
+                                    <div key={cat.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
                                         <div className="flex items-center gap-3">
                                             <CategoryIcon icon={cat.icon} color={cat.color} size={18} className="w-9 h-9" />
                                             <div>
@@ -539,8 +534,8 @@ export default function Reports() {
                 <Card className="p-6 bg-card border-border mt-6">
                     <h3 className="text-lg font-semibold text-foreground mb-4">Расходы по дням недели</h3>
                     <div className="flex items-center justify-center gap-3">
-                        {heatmapData.map((day, i) => (
-                            <div key={i} className="text-center">
+                        {heatmapData.map((day) => (
+                            <div key={day.day} className="text-center">
                                 <div
                                     className="w-14 h-14 rounded-xl flex items-center justify-center mb-2"
                                     style={{

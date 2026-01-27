@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/lib/utils';
 import { APP_VERSION } from '@/version';
@@ -35,15 +35,14 @@ export default function Layout({ children }) {
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
-    // Determine current page from location
-    const getCurrentPage = () => {
+    // Determine current page from location (memoized)
+    const currentPageName = useMemo(() => {
         const path = location.pathname;
         if (path === '/') return 'Dashboard';
         const page = navItems.find(item => path.includes(item.name.toLowerCase()));
         return page?.name || 'Dashboard';
-    };
+    }, [location.pathname]);
 
-    const currentPageName = getCurrentPage();
 
     return (
         <div className="min-h-screen bg-background">

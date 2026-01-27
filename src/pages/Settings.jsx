@@ -11,15 +11,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useAccounts, useCategories, useTransactions, useBudgets, useGoals, useAppSettings, useNotificationSettings, calculateAccountBalance } from '@/components/finance/useFinanceData';
-import { CURRENCIES, DATE_FORMATS } from '@/components/finance/constants';
+import { useAccounts, useCategories, useTransactions, useBudgets, useGoals, useAppSettings, useNotificationSettings, calculateAccountBalance, useLiveRates } from '@/components/finance/useFinanceData';
+import { CURRENCIES, DATE_FORMATS, LANGUAGES } from '@/components/finance/constants';
 import CategoryManager from '@/components/finance/CategoryManager';
 import AccountManager from '@/components/finance/AccountManager';
 import ExportImport from '@/components/finance/ExportImport';
 import NotificationSettingsCard from '@/components/finance/NotificationSettings';
 import UpdateChecker from '@/components/finance/UpdateChecker';
 
-import { useLiveRates } from '@/components/finance/useFinanceData';
 import { APP_VERSION } from '@/version';
 
 export default function Settings() {
@@ -57,19 +56,9 @@ export default function Settings() {
 
     const handleThemeChange = async (theme) => {
         await updateSettings.mutateAsync({ theme });
-        // Apply theme
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else if (theme === 'light') {
-            document.documentElement.classList.remove('dark');
-        } else {
-            // System
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        }
+        // Use shared applyTheme function from App.jsx
+        const { applyTheme } = await import('@/App');
+        applyTheme(theme);
         toast.success('Тема обновлена');
     };
 
@@ -194,6 +183,31 @@ export default function Settings() {
                                     <SelectContent>
                                         {DATE_FORMATS.map(f => (
                                             <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Separator />
+
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <Label>Язык интерфейса</Label>
+                                    <p className="text-sm text-muted-foreground">Язык для дат и текста</p>
+                                </div>
+                                <Select
+                                    value={settings?.language || 'ru'}
+                                    onValueChange={async (lang) => {
+                                        await updateSettings.mutateAsync({ language: lang });
+                                        toast.success('Язык обновлён');
+                                    }}
+                                >
+                                    <SelectTrigger className="w-40 bg-background border-input">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {LANGUAGES.map(l => (
+                                            <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

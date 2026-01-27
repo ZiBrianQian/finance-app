@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Wallet } from 'lucide-react';
+import { toast } from 'sonner';
 import { CURRENCIES, ACCOUNT_TYPES, COLORS, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from './constants';
 
 export default function OnboardingModal({
@@ -35,7 +36,7 @@ export default function OnboardingModal({
             });
             setStep(2);
         } catch (error) {
-            console.error('Error creating account:', error);
+            toast.error('Ошибка создания счёта');
         }
         setLoading(false);
     };
@@ -50,7 +51,7 @@ export default function OnboardingModal({
             });
             onComplete();
         } catch (error) {
-            console.error('Error creating categories:', error);
+            toast.error('Ошибка создания категорий');
         }
         setLoading(false);
     };

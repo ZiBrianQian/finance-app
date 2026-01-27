@@ -33,8 +33,8 @@ export default function StatsCard({ title, amount, currency, comparison, type = 
                     </div>
                 )}
             </div>
-            <p className={`text-2xl font-bold mb-2 ${colors[type]}`}>
-                {type === 'expense' ? '-' : ''}{formatMoney(Math.abs(amount), currency)}
+            <p className={`text-2xl font-bold mb-2 ${amount < 0 ? 'text-red-600 dark:text-red-400' : colors[type]}`}>
+                {formatMoney(amount, currency)}
             </p>
             {comparison !== undefined && comparison !== null && (
                 <div className="flex items-center gap-1">

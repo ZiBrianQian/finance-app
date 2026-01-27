@@ -71,13 +71,36 @@ export default function Dashboard() {
         return balances;
     }, [accounts, transactions, rates]);
 
-    const totalBalance = useMemo(() =>
-        Object.entries(accountBalances).reduce((sum, [accId, bal]) => {
+    const totalBalance = useMemo(() => {
+        // Skip if rates not loaded yet
+        if (!rates || Object.keys(rates).length === 0) {
+            return 0;
+        }
+
+        const defaultCurrency = settings?.defaultCurrency || 'RUB';
+        let sum = 0;
+
+        Object.entries(accountBalances).forEach(([accId, bal]) => {
             const acc = accounts.find(a => a.id === accId);
-            return sum + convertCurrency(bal, acc?.currency || 'USD', settings?.defaultCurrency || 'USD', rates);
-        }, 0),
-        [accountBalances, accounts, settings?.defaultCurrency, rates]
-    );
+            if (!acc) return;
+
+            const currency = acc.currency || 'USD';
+            let converted;
+
+            if (currency === defaultCurrency) {
+                converted = bal;
+            } else {
+                // Convert to default currency
+                const fromRate = rates[currency] || 1;
+                const toRate = rates[defaultCurrency] || 1;
+                converted = Math.round(bal / fromRate * toRate);
+            }
+
+            sum += converted;
+        });
+
+        return sum;
+    }, [accountBalances, accounts, settings?.defaultCurrency, rates]);
 
     const incomeComparison = prevStats.income > 0
         ? ((currentStats.income - prevStats.income) / prevStats.income) * 100
@@ -238,7 +261,7 @@ export default function Dashboard() {
                 {(budgetAlerts.length > 0 || upcomingRecurring.length > 0) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         {budgetAlerts.map((alert, i) => (
-                            <div key={i} className={`flex items-center gap-3 p-4 rounded-xl ${alert.type === 'exceeded' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                            <div key={`alert-${alert.category}-${i}`} className={`flex items-center gap-3 p-4 rounded-xl ${alert.type === 'exceeded' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                                 }`}>
                                 <AlertTriangle className="w-5 h-5 shrink-0" />
                                 <span className="text-sm">
@@ -249,8 +272,8 @@ export default function Dashboard() {
                                 </span>
                             </div>
                         ))}
-                        {upcomingRecurring.map((rule, i) => (
-                            <div key={i} className="flex items-center gap-3 p-4 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        {upcomingRecurring.map((rule) => (
+                            <div key={rule.id} className="flex items-center gap-3 p-4 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
                                 <Bell className="w-5 h-5 shrink-0" />
                                 <span className="text-sm">
                                     Ожидается: {rule.title} ({formatMoney(rule.amount, rule.currency)})
@@ -444,8 +467,8 @@ export default function Dashboard() {
                             <h3 className="text-lg font-semibold text-foreground mb-4">Топ расходов</h3>
                             {categoryExpenses.length > 0 ? (
                                 <div className="space-y-3">
-                                    {categoryExpenses.slice(0, 5).map((cat, i) => (
-                                        <div key={i} className="flex items-center justify-between">
+                                    {categoryExpenses.slice(0, 5).map((cat) => (
+                                        <div key={cat.name} className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <div
                                                     className="w-3 h-3 rounded-full"

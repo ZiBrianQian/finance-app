@@ -3,7 +3,7 @@ import FinancialCalendar from '@/components/finance/FinancialCalendar';
 
 export default function Calendar() {
     return (
-        <div className="p-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
             <FinancialCalendar />
         </div>
     );

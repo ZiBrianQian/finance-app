@@ -74,9 +74,9 @@ export default function DateRangePicker({
                     {showPresets && (
                         <div className="border-r p-3 space-y-1">
                             <p className="text-xs font-medium text-muted-foreground mb-2">Быстрый выбор</p>
-                            {PRESETS.map((preset, i) => (
+                            {PRESETS.map((preset) => (
                                 <Button
-                                    key={i}
+                                    key={preset.label}
                                     variant="ghost"
                                     size="sm"
                                     className="w-full justify-start h-8 text-xs"
@@ -91,8 +91,8 @@ export default function DateRangePicker({
                         <div className="flex items-center gap-2 mb-3 text-sm">
                             <span
                                 className={`px-2 py-1 rounded cursor-pointer transition-colors ${selecting === 'start'
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted text-muted-foreground hover:bg-accent'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-muted-foreground hover:bg-accent'
                                     }`}
                                 onClick={() => setSelecting('start')}
                             >
@@ -101,8 +101,8 @@ export default function DateRangePicker({
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                             <span
                                 className={`px-2 py-1 rounded cursor-pointer transition-colors ${selecting === 'end'
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted text-muted-foreground hover:bg-accent'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-muted-foreground hover:bg-accent'
                                     }`}
                                 onClick={() => setSelecting('end')}
                             >

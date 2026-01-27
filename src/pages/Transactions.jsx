@@ -144,6 +144,25 @@ export default function Transactions() {
     };
 
     const proceedBulkDelete = async () => {
+        // Check for debt-linked transactions and update them
+        for (const id of selectedIds) {
+            const txToDelete = transactions.find(t => t.id === id);
+            if (txToDelete?.debtId) {
+                const linkedDebt = debts.find(d => d.id === txToDelete.debtId);
+                if (linkedDebt) {
+                    const updatedPayments = (linkedDebt.payments || []).filter(
+                        p => p.transactionId !== id
+                    );
+                    const totalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
+                    const isPaid = totalPaid >= linkedDebt.amount;
+                    await updateDebt.mutateAsync({
+                        id: linkedDebt.id,
+                        data: { payments: updatedPayments, isPaid }
+                    });
+                }
+            }
+        }
+
         await bulkDelete.mutateAsync(selectedIds);
         setSelectedIds([]);
         setConfirmBulkDelete(false);
