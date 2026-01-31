@@ -25,10 +25,10 @@ dist-ssr
 
 # Build output - DO NOT UPLOAD TO GITHUB
 release/
-build/
 *.exe
 *.zip
 *.7z
+*.dmg
 
 # Temp files
 temp_*

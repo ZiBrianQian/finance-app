@@ -49,8 +49,11 @@
         "icon": "public/icon.png",
         "category": "public.app-category.finance",
         "artifactName": "${productName}-${version}-${arch}.${ext}",
-        "hardenedRuntime": false,
-        "gatekeeperAssess": false
+        "hardenedRuntime": true,
+        "gatekeeperAssess": false,
+        "entitlements": "build/entitlements.mac.plist",
+        "entitlementsInherit": "build/entitlements.mac.plist",
+        "signIgnore": []
     },
     "dmg": {
         "title": "${productName}",
