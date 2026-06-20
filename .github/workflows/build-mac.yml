@@ -30,9 +30,7 @@ jobs:
         run: npm run build
 
       - name: Build Mac app
-        run: npx electron-builder --mac --config electron-builder.json
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac --config electron-builder.json --publish never
 
       - name: Upload Mac artifacts
         uses: actions/upload-artifact@v4
@@ -49,6 +47,5 @@ jobs:
         with:
           files: |
             release/*.dmg
-            release/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
