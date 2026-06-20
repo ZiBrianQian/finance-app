@@ -16,10 +16,60 @@ const GITHUB_OWNER = 'ZiBrianQian'; // e.g., 'johndoe'
 const GITHUB_REPO = 'finance-app';        // e.g., 'finance-app'
 
 const CURRENT_VERSION = app.getVersion();
+const STARTUP_CHECK_CACHE_MS = 6 * 60 * 60 * 1000;
 
 let updateInfo = null;
 let downloadProgress = 0;
 let isDownloading = false;
+
+function getUpdateCachePath() {
+    return path.join(app.getPath('userData'), 'update-check-cache.json');
+}
+
+function readUpdateCache() {
+    try {
+        const cachePath = getUpdateCachePath();
+        if (!fs.existsSync(cachePath)) return null;
+        return JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+    } catch (error) {
+        console.warn('[Updater] Failed to read update cache:', error);
+        return null;
+    }
+}
+
+function writeUpdateCache(data) {
+    try {
+        fs.writeFileSync(getUpdateCachePath(), JSON.stringify(data, null, 2), 'utf8');
+    } catch (error) {
+        console.warn('[Updater] Failed to write update cache:', error);
+    }
+}
+
+function formatRateLimitReset(headers) {
+    const reset = Number(headers['x-ratelimit-reset']);
+    if (!Number.isFinite(reset) || reset <= 0) return null;
+    return new Date(reset * 1000).toLocaleString();
+}
+
+function createGitHubApiError(res, payload) {
+    const message = payload?.message || `GitHub API returned HTTP ${res.statusCode}`;
+
+    if (res.statusCode === 403 && /rate limit/i.test(message)) {
+        const resetAtMs = Number(res.headers['x-ratelimit-reset']) * 1000;
+        const resetAt = formatRateLimitReset(res.headers);
+        const error = new Error(
+            resetAt
+                ? `Лимит запросов GitHub API исчерпан. Попробуйте после ${resetAt}.`
+                : 'Лимит запросов GitHub API исчерпан. Попробуйте позже.'
+        );
+        if (Number.isFinite(resetAtMs) && resetAtMs > Date.now()) {
+            error.rateLimitResetAt = resetAtMs;
+        }
+        return error;
+    }
+
+    return new Error(`${message} (HTTP ${res.statusCode})`);
+}
 
 /**
  * Check GitHub for latest release
@@ -27,17 +77,46 @@ let isDownloading = false;
 /**
  * Check GitHub for latest releases (cumulative)
  */
-async function checkForUpdates() {
+async function checkForUpdates({ useStartupCache = false } = {}) {
     console.log('[Updater] Starting update check...');
     console.log('[Updater] Current version:', CURRENT_VERSION);
     console.log('[Updater] GitHub:', GITHUB_OWNER + '/' + GITHUB_REPO);
+
+    const cached = readUpdateCache();
+    const now = Date.now();
+
+    if (cached?.rateLimitResetAt && now < cached.rateLimitResetAt) {
+        const resetAt = new Date(cached.rateLimitResetAt).toLocaleString();
+        throw new Error(`Лимит запросов GitHub API исчерпан. Попробуйте после ${resetAt}.`);
+    }
+
+    if (
+        useStartupCache &&
+        cached?.lastCheckedAt &&
+        cached?.result &&
+        now - cached.lastCheckedAt < STARTUP_CHECK_CACHE_MS
+    ) {
+        console.log('[Updater] Using cached startup update check result');
+        if (cached.result.updateAvailable) {
+            updateInfo = {
+                version: cached.result.version,
+                releaseNotes: cached.result.releaseNotes,
+                downloadUrl: cached.result.downloadUrl,
+                publishedAt: cached.result.publishedAt,
+                assetName: cached.result.assetName
+            };
+        }
+        return cached.result;
+    }
 
     return new Promise((resolve, reject) => {
         const options = {
             hostname: 'api.github.com',
             path: `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, // Changed from /releases/latest to /releases
             headers: {
-                'User-Agent': 'FinanceManager-Updater'
+                'Accept': 'application/vnd.github+json',
+                'User-Agent': 'FinanceManager-Updater',
+                'X-GitHub-Api-Version': '2022-11-28'
             }
         };
 
@@ -50,16 +129,37 @@ async function checkForUpdates() {
                 try {
                     console.log('[Updater] Response status:', res.statusCode);
 
+                    const payload = JSON.parse(data || 'null');
+
                     if (res.statusCode === 404) {
                         console.log('[Updater] No releases found');
                         resolve({ updateAvailable: false, message: 'No releases found' });
                         return;
                     }
 
-                    const releases = JSON.parse(data);
+                    if (res.statusCode < 200 || res.statusCode >= 300) {
+                        const error = createGitHubApiError(res, payload);
+                        if (error.rateLimitResetAt) {
+                            writeUpdateCache({
+                                ...cached,
+                                rateLimitResetAt: error.rateLimitResetAt,
+                                lastError: error.message
+                            });
+                        }
+                        reject(error);
+                        return;
+                    }
+
+                    if (!Array.isArray(payload)) {
+                        reject(new Error('GitHub API вернул неожиданный формат ответа.'));
+                        return;
+                    }
+
+                    const releases = payload;
 
                     // Filter releases that are newer than current version
                     const newReleases = releases.filter(release => {
+                        if (!release?.tag_name) return false;
                         const version = release.tag_name.replace('v', '');
                         return isNewerVersion(version, CURRENT_VERSION);
                     });
@@ -74,7 +174,7 @@ async function checkForUpdates() {
                         const latestVersion = latestRelease.tag_name.replace('v', '');
 
                         // Find portable exe asset from the LATEST release
-                        const portableAsset = latestRelease.assets.find(
+                        const portableAsset = (latestRelease.assets || []).find(
                             a => a.name.toLowerCase().includes('portable') && a.name.endsWith('.exe')
                         );
 
@@ -101,16 +201,28 @@ async function checkForUpdates() {
 
                         console.log('[Updater] Update available:', latestVersion);
 
-                        resolve({
+                        const result = {
                             updateAvailable: true,
                             ...updateInfo
+                        };
+                        writeUpdateCache({
+                            lastCheckedAt: Date.now(),
+                            rateLimitResetAt: null,
+                            result
                         });
+                        resolve(result);
                     } else {
                         console.log('[Updater] No update needed');
-                        resolve({
+                        const result = {
                             updateAvailable: false,
                             currentVersion: CURRENT_VERSION
+                        };
+                        writeUpdateCache({
+                            lastCheckedAt: Date.now(),
+                            rateLimitResetAt: null,
+                            result
                         });
+                        resolve(result);
                     }
                 } catch (error) {
                     console.error('[Updater] Parse error:', error);
@@ -347,7 +459,7 @@ export function initUpdater(mainWindow) {
  */
 export async function checkOnStartup(mainWindow) {
     try {
-        const result = await checkForUpdates();
+        const result = await checkForUpdates({ useStartupCache: true });
         if (result.updateAvailable && mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('update-available', result);
         }

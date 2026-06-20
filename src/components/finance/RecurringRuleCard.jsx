@@ -40,7 +40,7 @@ export default function RecurringRuleCard({ rule, category, account, onEdit, onD
                             </Badge>
                         </div>
 
-                        <p className={`text-lg font-bold mb-2 ${rule.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        <p className={`money-value text-lg font-bold mb-2 ${rule.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             {rule.type === 'income' ? '+' : '-'}{formatMoney(rule.amount, rule.currency)}
                         </p>
 

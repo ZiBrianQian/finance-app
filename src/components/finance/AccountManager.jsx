@@ -281,7 +281,7 @@ export default function AccountManager({
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={`font-semibold ${balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
+                                            <span className={`money-value shrink-0 font-semibold ${balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
                                                 {formatMoney(balance, account.currency)}
                                             </span>
                                             <DropdownMenu>

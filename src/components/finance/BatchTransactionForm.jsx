@@ -231,7 +231,7 @@ export default function BatchTransactionForm({
                     <div className="flex items-center justify-between pt-4 border-t">
                         <div className="text-sm">
                             <span className="text-muted-foreground">Итого ({filledRows.length} {filledRows.length === 1 ? 'транзакция' : 'транзакций'}):</span>
-                            <span className={`ml-2 text-lg font-bold ${type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                            <span className={`money-value ml-2 text-lg font-bold ${type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                                 {type === 'expense' ? '-' : '+'}{formatMoney(totalAmount, accounts.find(a => a.id === accountId)?.currency || defaultCurrency)}
                             </span>
                         </div>

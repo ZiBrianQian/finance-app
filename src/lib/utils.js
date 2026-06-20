@@ -9,6 +9,10 @@ const DATE_FNS_LOCALES = {
     en: enUS,
 };
 
+function keepMoneyNonBreaking(value) {
+    return String(value).replace(/[\u0020\u00A0\u202F]/g, '\u202F');
+}
+
 /**
  * Get date-fns locale object based on language code
  * @param {string} language - Language code ('ru', 'en')
@@ -37,22 +41,19 @@ export function cn(...inputs) {
 
 export function formatCurrency(amount, currency = 'USD', language = 'ru') {
     const locale = getIntlLocale(language);
-    // Check if amount is valid number
-    if (amount === undefined || amount === null || isNaN(amount)) {
-        return new Intl.NumberFormat(locale, {
-            style: 'currency',
-            currency: currency,
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-        }).format(0);
-    }
-
-    return new Intl.NumberFormat(locale, {
+    const formatter = new Intl.NumberFormat(locale, {
         style: 'currency',
         currency: currency,
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
-    }).format(amount / 100);
+    });
+
+    // Check if amount is valid number
+    if (amount === undefined || amount === null || isNaN(amount)) {
+        return keepMoneyNonBreaking(formatter.format(0));
+    }
+
+    return keepMoneyNonBreaking(formatter.format(amount / 100));
 }
 
 export function formatDate(date, formatStr = 'd MMMM yyyy', language = 'ru') {

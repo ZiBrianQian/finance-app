@@ -22,14 +22,14 @@ export default function BudgetCard({ rule, category, spent, currency, daysLeft, 
             className={`p-4 bg-card border-border ${isClickable ? 'cursor-pointer hover:border-primary/50 hover:shadow-md transition-all' : ''}`}
             onClick={onClick}
         >
-            <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-start justify-between gap-3 mb-3">
+                <div className="flex min-w-0 items-center gap-3">
                     {category && (
                         <CategoryIcon icon={category.icon} color={category.color} size={20} className="w-10 h-10" />
                     )}
-                    <div>
-                        <p className="font-medium text-foreground">{category?.name || 'Все расходы'}</p>
-                        <p className="text-sm text-muted-foreground">
+                    <div className="min-w-0">
+                        <p className="font-medium text-foreground truncate">{category?.name || 'Все расходы'}</p>
+                        <p className="money-value text-sm text-muted-foreground">
                             {formatMoney(spent, currency)} из {formatMoney(limit, currency)}
                         </p>
                     </div>
@@ -58,12 +58,12 @@ export default function BudgetCard({ rule, category, spent, currency, daysLeft, 
                 indicatorClassName={isOver ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-green-500'}
             />
 
-            <div className="flex items-center justify-between mt-3 text-sm">
-                <span className={`${remaining >= 0 ? 'text-muted-foreground' : 'text-red-600 dark:text-red-400'}`}>
+            <div className="flex items-center justify-between gap-3 mt-3 text-sm">
+                <span className={`min-w-0 ${remaining >= 0 ? 'text-muted-foreground' : 'text-red-600 dark:text-red-400'}`}>
                     {remaining >= 0 ? `Осталось: ${formatMoney(remaining, currency)}` : `Перерасход: ${formatMoney(-remaining, currency)}`}
                 </span>
                 {daysLeft > 0 && remaining > 0 && (
-                    <span className="text-muted-foreground">
+                    <span className="money-value shrink-0 text-right text-muted-foreground">
                         ~{formatMoney(Math.round(remaining / daysLeft), currency)}/день
                     </span>
                 )}

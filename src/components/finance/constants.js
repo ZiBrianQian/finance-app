@@ -79,6 +79,9 @@ export const DEFAULT_INCOME_CATEGORIES = [
     { name: 'Другое', icon: 'DollarSign', color: '#64748B' },
 ];
 
+const MONEY_GROUP_SEPARATOR = '\u202F';
+const MONEY_SYMBOL_SEPARATOR = '\u00A0';
+
 export const formatMoney = (cents, currency = 'USD', showSign = false) => {
     const amount = cents / 100;
     const curr = CURRENCIES.find(c => c.code === currency) || { symbol: currency };
@@ -89,11 +92,10 @@ export const formatMoney = (cents, currency = 'USD', showSign = false) => {
         useGrouping: true
     }).format(Math.abs(amount));
 
-    // Ensure space separator is used (replace NBSP if present)
-    const withSpace = formatted.replace(/\u00A0/g, ' ');
+    const withNonBreakingGroups = formatted.replace(/[\u0020\u00A0\u202F]/g, MONEY_GROUP_SEPARATOR);
 
     const sign = showSign && cents > 0 ? '+' : (cents < 0 ? '-' : '');
-    return `${sign}${curr.symbol} ${withSpace}`;
+    return `${sign}${curr.symbol}${MONEY_SYMBOL_SEPARATOR}${withNonBreakingGroups}`;
 };
 
 export const parseMoney = (value) => {

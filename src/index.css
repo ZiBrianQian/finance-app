@@ -93,6 +93,39 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+.money-value {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  line-height: 1.15;
+}
+
+.money-value-lg {
+  font-size: 1.5rem;
+}
+
+.money-fit-container {
+  container-type: inline-size;
+}
+
+.money-value-fit {
+  display: block;
+  max-width: 100%;
+  font-size: clamp(1rem, 11cqw, 1.375rem);
+}
+
+.money-value-compact {
+  font-size: clamp(0.8125rem, 12cqw, 0.875rem);
+}
+
+.money-value-truncate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

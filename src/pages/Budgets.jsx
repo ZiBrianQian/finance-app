@@ -161,7 +161,7 @@ export default function Budgets() {
                                     <div className="flex items-center gap-4">
                                         <div className="text-right">
                                             <p className="text-sm text-muted-foreground">Всего</p>
-                                            <p className="text-lg font-semibold text-foreground">
+                                            <p className="money-value text-lg font-semibold text-foreground">
                                                 {formatMoney(totalSpent, settings?.defaultCurrency)} / {formatMoney(totalLimit, settings?.defaultCurrency)}
                                             </p>
                                         </div>
@@ -288,7 +288,7 @@ export default function Budgets() {
                                                     {tx.notes && <><span>•</span><span>{tx.notes}</span></>}
                                                 </div>
                                             </div>
-                                            <span className="font-semibold text-sm shrink-0 text-red-600">
+                                            <span className="money-value font-semibold text-sm shrink-0 text-red-600">
                                                 -{formatMoney(tx.amount, tx.currency)}
                                             </span>
                                         </div>

@@ -228,7 +228,7 @@ export default function Goals() {
                                 <p className="text-sm text-muted-foreground">Цель</p>
                                 <p className="font-semibold text-foreground">{selectedGoal.name}</p>
                                 <p className="text-sm text-muted-foreground mt-2">
-                                    Текущий прогресс: {formatMoney(selectedGoal.currentAmount, selectedGoal.currency)} / {formatMoney(selectedGoal.targetAmount, selectedGoal.currency)}
+                                    Текущий прогресс: <span className="money-value">{formatMoney(selectedGoal.currentAmount, selectedGoal.currency)} / {formatMoney(selectedGoal.targetAmount, selectedGoal.currency)}</span>
                                 </p>
                             </div>
                             <div>

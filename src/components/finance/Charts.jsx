@@ -8,7 +8,7 @@ import { formatMoney, COLORS } from './constants';
 export function BalanceLineChart({ data, currency }) {
     return (
         <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: 8, bottom: 0 }}>
                 <defs>
                     <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
@@ -23,6 +23,7 @@ export function BalanceLineChart({ data, currency }) {
                     tickLine={false}
                 />
                 <YAxis
+                    width={72}
                     tick={{ fontSize: 12, fill: '#64748b' }}
                     axisLine={false}
                     tickLine={false}
@@ -53,7 +54,7 @@ export function BalanceLineChart({ data, currency }) {
 export function IncomeExpenseChart({ data, currency }) {
     return (
         <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: 8, bottom: 0 }}>
                 <defs>
                     <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
@@ -72,6 +73,7 @@ export function IncomeExpenseChart({ data, currency }) {
                     tickLine={false}
                 />
                 <YAxis
+                    width={72}
                     tick={{ fontSize: 12, fill: '#64748b' }}
                     axisLine={false}
                     tickLine={false}

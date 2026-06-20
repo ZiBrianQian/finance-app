@@ -375,7 +375,7 @@ export default function Reports() {
                         <p className="text-sm text-muted-foreground">
                             {reportType === 'expenses' ? 'Всего расходов' : 'Всего доходов'}
                         </p>
-                        <p className={`text-2xl font-bold mt-1 ${reportType === 'expenses' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                        <p className={`money-value money-value-lg max-w-full font-bold mt-1 ${reportType === 'expenses' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                             {formatMoney(reportType === 'expenses' ? currentStats.expense : currentStats.income, settings?.defaultCurrency)}
                         </p>
                         {compareEnabled && (
@@ -463,17 +463,17 @@ export default function Reports() {
                         <h3 className="text-lg font-semibold text-foreground mb-4">Детализация</h3>
                         <div className="space-y-3">
                             {categoryData.map((cat) => (
-                                <div key={cat.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
-                                    <div className="flex items-center gap-3">
+                                <div key={cat.name} className="flex min-w-0 items-center justify-between gap-3 p-3 bg-muted/50 rounded-xl">
+                                    <div className="flex min-w-0 items-center gap-3">
                                         <CategoryIcon icon={cat.icon} color={cat.color} size={18} className="w-9 h-9" />
-                                        <div>
-                                            <p className="font-medium text-foreground">{cat.name}</p>
+                                        <div className="min-w-0">
+                                            <p className="font-medium text-foreground truncate">{cat.name}</p>
                                             <p className="text-sm text-muted-foreground">
                                                 {total > 0 ? ((cat.value / total) * 100).toFixed(1) : 0}%
                                             </p>
                                         </div>
                                     </div>
-                                    <p className="font-semibold text-foreground">
+                                    <p className="money-value shrink-0 font-semibold text-foreground">
                                         {formatMoney(cat.value, settings?.defaultCurrency)}
                                     </p>
                                 </div>
@@ -497,18 +497,18 @@ export default function Reports() {
                         {compareEnabled ? (
                             <div className="space-y-3">
                                 {comparisonData.slice(0, 8).map((cat) => (
-                                    <div key={cat.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
-                                        <div className="flex items-center gap-3">
+                                    <div key={cat.name} className="flex min-w-0 items-center justify-between gap-3 p-3 bg-muted/50 rounded-xl">
+                                        <div className="flex min-w-0 items-center gap-3">
                                             <CategoryIcon icon={cat.icon} color={cat.color} size={18} className="w-9 h-9" />
-                                            <div>
-                                                <p className="font-medium text-foreground">{cat.name}</p>
+                                            <div className="min-w-0">
+                                                <p className="font-medium text-foreground truncate">{cat.name}</p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    было: {formatMoney(cat.prev, settings?.defaultCurrency)}
+                                                    было: <span className="money-value">{formatMoney(cat.prev, settings?.defaultCurrency)}</span>
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="font-semibold text-foreground">
+                                        <div className="shrink-0 text-right">
+                                            <p className="money-value font-semibold text-foreground">
                                                 {formatMoney(cat.current, settings?.defaultCurrency)}
                                             </p>
                                             <p className={`text-sm font-medium ${cat.change > 0 ? 'text-red-600 dark:text-red-400' : cat.change < 0 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
@@ -547,7 +547,7 @@ export default function Reports() {
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">{day.day}</p>
-                                <p className="text-xs font-medium text-foreground">
+                                <p className="money-value text-xs font-medium text-foreground">
                                     {formatMoney(day.total, settings?.defaultCurrency)}
                                 </p>
                             </div>

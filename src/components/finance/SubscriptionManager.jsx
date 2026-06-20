@@ -87,7 +87,7 @@ export default function SubscriptionManager() {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">В месяц</p>
-                                <h3 className="text-2xl font-bold">{formatCurrency(totalMonthly, settings?.defaultCurrency)}</h3>
+                                <h3 className="money-value money-value-lg max-w-full font-bold">{formatCurrency(totalMonthly, settings?.defaultCurrency)}</h3>
                             </div>
                         </div>
                     </CardContent>
@@ -100,7 +100,7 @@ export default function SubscriptionManager() {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">В год</p>
-                                <h3 className="text-2xl font-bold">{formatCurrency(totalYearly, settings?.defaultCurrency)}</h3>
+                                <h3 className="money-value money-value-lg max-w-full font-bold">{formatCurrency(totalYearly, settings?.defaultCurrency)}</h3>
                             </div>
                         </div>
                     </CardContent>
@@ -138,7 +138,7 @@ export default function SubscriptionManager() {
                                         <p className="text-sm text-muted-foreground">{formatDate(sub.nextRunDate)}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-bold">{formatCurrency(sub.amount, sub.currency)}</p>
+                                        <p className="money-value font-bold">{formatCurrency(sub.amount, sub.currency)}</p>
                                         <span className="text-[10px] text-muted-foreground uppercase">{sub.frequency}</span>
                                     </div>
                                 </CardContent>
@@ -185,7 +185,7 @@ export default function SubscriptionManager() {
                                         </div>
 
                                         <div className="mb-4">
-                                            <span className="text-2xl font-bold block text-foreground">
+                                            <span className="money-value money-value-lg block font-bold text-foreground">
                                                 {formatCurrency(sub.amount, sub.currency)}
                                             </span>
                                             <p className="text-sm text-muted-foreground mt-1">

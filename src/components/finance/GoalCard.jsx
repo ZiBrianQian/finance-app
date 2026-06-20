@@ -63,16 +63,16 @@ export default function GoalCard({ goal, onClick }) {
                 indicatorClassName={isCompleted ? 'bg-green-500' : 'bg-primary'}
             />
 
-            <div className="flex items-center justify-between mt-4">
-                <div>
+            <div className="flex min-w-0 items-center justify-between gap-3 mt-4">
+                <div className="min-w-0">
                     <p className="text-sm text-muted-foreground">Накоплено</p>
-                    <p className="font-semibold text-foreground">
+                    <p className="money-value money-value-truncate max-w-full font-semibold text-foreground">
                         {formatMoney(goal.currentAmount, goal.currency)}
                     </p>
                 </div>
-                <div className="text-right">
+                <div className="min-w-0 text-right">
                     <p className="text-sm text-muted-foreground">Цель</p>
-                    <p className="font-semibold text-foreground">
+                    <p className="money-value money-value-truncate max-w-full font-semibold text-foreground">
                         {formatMoney(goal.targetAmount, goal.currency)}
                     </p>
                 </div>
@@ -84,13 +84,13 @@ export default function GoalCard({ goal, onClick }) {
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <TrendingUp className="w-4 h-4 text-blue-500" />
                             <span>
-                                Откладывайте {formatMoney(weeklyRequired, goal.currency)}/нед, чтобы успеть
+                                Откладывайте <span className="money-value">{formatMoney(weeklyRequired, goal.currency)}/нед</span>, чтобы успеть
                             </span>
                         </div>
                     )}
                     {!daysUntilDeadline && (
                         <p className="text-sm text-muted-foreground">
-                            Осталось: {formatMoney(remaining, goal.currency)}
+                            Осталось: <span className="money-value">{formatMoney(remaining, goal.currency)}</span>
                         </p>
                     )}
                 </div>

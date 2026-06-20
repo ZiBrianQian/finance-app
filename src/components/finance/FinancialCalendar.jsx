@@ -132,13 +132,13 @@ export default function FinancialCalendar() {
                                     {income > 0 && (
                                         <div className="flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-500/10 px-1 py-0.5 rounded-full w-fit">
                                             <TrendingUp className="w-3 h-3" />
-                                            <span className="hidden xl:inline">{formatCurrency(income, settings?.defaultCurrency)}</span>
+                                            <span className="money-value hidden xl:inline">{formatCurrency(income, settings?.defaultCurrency)}</span>
                                         </div>
                                     )}
                                     {expense > 0 && (
                                         <div className="flex items-center gap-1 text-[10px] text-red-600 bg-red-500/10 px-1 py-0.5 rounded-full w-fit">
                                             <TrendingDown className="w-3 h-3" />
-                                            <span className="hidden xl:inline">{formatCurrency(expense, settings?.defaultCurrency)}</span>
+                                            <span className="money-value hidden xl:inline">{formatCurrency(expense, settings?.defaultCurrency)}</span>
                                         </div>
                                     )}
                                 </div>
@@ -180,7 +180,7 @@ export default function FinancialCalendar() {
                                     <Plus className="w-4 h-4" />
                                 </Button>
                             </div>
-                            <p className="text-lg font-bold text-emerald-600">
+                            <p className="money-value text-lg font-bold text-emerald-600">
                                 +{formatCurrency(selectedDayData.income, settings?.defaultCurrency)}
                             </p>
                         </div>
@@ -196,7 +196,7 @@ export default function FinancialCalendar() {
                                     <Plus className="w-4 h-4" />
                                 </Button>
                             </div>
-                            <p className="text-lg font-bold text-red-600">
+                            <p className="money-value text-lg font-bold text-red-600">
                                 -{formatCurrency(selectedDayData.expense, settings?.defaultCurrency)}
                             </p>
                         </div>
@@ -221,7 +221,7 @@ export default function FinancialCalendar() {
                                                 <span className="font-medium text-sm">{cat?.name || tx.merchant || 'Без категории'}</span>
                                                 {tx.notes && <span className="text-xs text-muted-foreground">{tx.notes}</span>}
                                             </div>
-                                            <span className={`font-bold text-sm ${tx.type === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
+                                            <span className={`money-value shrink-0 font-bold text-sm ${tx.type === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
                                                 {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, tx.currency)}
                                             </span>
                                         </div>
@@ -244,7 +244,7 @@ export default function FinancialCalendar() {
                                             <span className="font-medium text-sm text-blue-700 dark:text-blue-300">{rule.title}</span>
                                             <Badge variant="secondary" className="w-fit text-[10px] h-5">Рекуррентный</Badge>
                                         </div>
-                                        <span className="font-bold text-sm text-blue-600 dark:text-blue-400">
+                                        <span className="money-value shrink-0 font-bold text-sm text-blue-600 dark:text-blue-400">
                                             ~{formatCurrency(rule.amount, rule.currency)}
                                         </span>
                                     </div>

@@ -22,22 +22,22 @@ export default function StatsCard({ title, amount, currency, comparison, type = 
 
     return (
         <Card
-            className={`p-5 bg-card border-border shadow-sm ${isClickable ? 'cursor-pointer hover:border-primary/50 hover:shadow-md transition-all' : ''}`}
+            className={`money-fit-container min-w-0 min-h-[8.5rem] p-5 bg-card border-border shadow-sm ${isClickable ? 'cursor-pointer hover:border-primary/50 hover:shadow-md transition-all' : ''}`}
             onClick={onClick}
         >
-            <div className="flex items-start justify-between mb-3">
-                <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <div className="flex items-start justify-between gap-3 mb-3">
+                <p className="min-w-0 text-sm font-medium text-muted-foreground">{title}</p>
                 {Icon && (
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${bgColors[type]}`}>
+                    <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${bgColors[type]}`}>
                         <Icon className={`w-5 h-5 ${colors[type]}`} />
                     </div>
                 )}
             </div>
-            <p className={`text-2xl font-bold mb-2 ${amount < 0 ? 'text-red-600 dark:text-red-400' : colors[type]}`}>
+            <p className={`money-value money-value-lg money-value-fit font-bold mb-2 ${amount < 0 ? 'text-red-600 dark:text-red-400' : colors[type]}`}>
                 {formatMoney(amount, currency)}
             </p>
             {comparison !== undefined && comparison !== null && (
-                <div className="flex items-center gap-1">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
                     {isPositive ? (
                         <TrendingUp className="w-4 h-4 text-green-500" />
                     ) : isNegative ? (

@@ -167,7 +167,7 @@ export default function TransactionForm({
                                             <span>Обновление курса...</span>
                                         </>
                                     ) : (
-                                        <span>≈ {formatMoney(convertedAmount, defaultCurrency)}</span>
+                                        <span className="money-value">≈ {formatMoney(convertedAmount, defaultCurrency)}</span>
                                     )}
                                 </div>
                             )}

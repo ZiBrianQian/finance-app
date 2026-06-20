@@ -333,7 +333,7 @@ export default function DebtManager() {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Вам должны</p>
-                                <h2 className="text-3xl font-bold text-emerald-600">
+                                <h2 className="money-value money-value-lg max-w-full font-bold text-emerald-600">
                                     {formatCurrency(totalLent, settings?.defaultCurrency)}
                                 </h2>
                             </div>
@@ -349,7 +349,7 @@ export default function DebtManager() {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Вы должны</p>
-                                <h2 className="text-3xl font-bold text-red-600">
+                                <h2 className="money-value money-value-lg max-w-full font-bold text-red-600">
                                     {formatCurrency(totalOwe, settings?.defaultCurrency)}
                                 </h2>
                             </div>
@@ -440,17 +440,17 @@ export default function DebtManager() {
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Общий долг:</span>
-                                    <span className="font-medium">{formatMoney(paymentDebt.amount, paymentDebt.currency)}</span>
+                                    <span className="money-value font-medium">{formatMoney(paymentDebt.amount, paymentDebt.currency)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Уже внесено:</span>
-                                    <span className="font-medium text-emerald-600">
+                                    <span className="money-value font-medium text-emerald-600">
                                         {formatMoney((paymentDebt.payments || []).reduce((s, p) => s + p.amount, 0), paymentDebt.currency)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm border-t pt-2">
                                     <span className="text-muted-foreground">Осталось:</span>
-                                    <span className="font-bold text-lg">
+                                    <span className="money-value font-bold text-lg">
                                         {formatMoney(getRemainingAmount(paymentDebt), paymentDebt.currency)}
                                     </span>
                                 </div>
@@ -463,7 +463,7 @@ export default function DebtManager() {
                                         {paymentDebt.payments.map((p, i) => (
                                             <div key={p.id || i} className="flex justify-between text-sm py-1">
                                                 <span className="text-muted-foreground">{formatDate(p.date)}</span>
-                                                <span className="text-emerald-600 font-medium">+{formatMoney(p.amount, paymentDebt.currency)}</span>
+                                                <span className="money-value text-emerald-600 font-medium">+{formatMoney(p.amount, paymentDebt.currency)}</span>
                                             </div>
                                         ))}
                                     </ScrollArea>
@@ -581,15 +581,15 @@ function DebtCard({ debt, onEdit, onTogglePaid, onDelete, onAddPayment, currency
                         <div className="text-right">
                             {hasPayments ? (
                                 <>
-                                    <span className={`block text-lg font-bold ${isOweMe ? 'text-emerald-600' : 'text-red-600'}`}>
+                                    <span className={`money-value block text-lg font-bold ${isOweMe ? 'text-emerald-600' : 'text-red-600'}`}>
                                         {formatCurrency(remaining, debt.currency || currency)}
                                     </span>
-                                    <span className="text-xs text-muted-foreground line-through">
+                                    <span className="money-value text-xs text-muted-foreground line-through">
                                         {formatCurrency(debt.amount, debt.currency || currency)}
                                     </span>
                                 </>
                             ) : (
-                                <span className={`block text-lg font-bold ${isOweMe ? 'text-emerald-600' : 'text-red-600'}`}>
+                                <span className={`money-value block text-lg font-bold ${isOweMe ? 'text-emerald-600' : 'text-red-600'}`}>
                                     {formatCurrency(debt.amount, debt.currency || currency)}
                                 </span>
                             )}
@@ -628,7 +628,7 @@ function DebtCard({ debt, onEdit, onTogglePaid, onDelete, onAddPayment, currency
                     <div className="mt-4 pt-3 border-t">
                         <div className="flex justify-between text-xs text-muted-foreground mb-1">
                             <span>Погашено</span>
-                            <span>{formatCurrency(totalPaid, debt.currency || currency)} из {formatCurrency(debt.amount, debt.currency || currency)}</span>
+                            <span className="money-value">{formatCurrency(totalPaid, debt.currency || currency)} из {formatCurrency(debt.amount, debt.currency || currency)}</span>
                         </div>
                         <div className="h-2 bg-secondary rounded-full overflow-hidden">
                             <div

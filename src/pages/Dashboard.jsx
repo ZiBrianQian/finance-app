@@ -352,9 +352,9 @@ export default function Dashboard() {
                                                                 <span className="text-xs font-semibold text-primary">{percent}%</span>
                                                             </div>
                                                             <Progress value={Math.min(percent, 100)} className="h-1.5 mb-1.5" />
-                                                            <div className="flex justify-between text-xs text-muted-foreground">
-                                                                <span>{formatMoney(goal.currentAmount, goal.currency)}</span>
-                                                                <span>{formatMoney(goal.targetAmount, goal.currency)}</span>
+                                                            <div className="flex justify-between gap-3 text-xs text-muted-foreground">
+                                                                <span className="money-value money-value-truncate max-w-[48%]">{formatMoney(goal.currentAmount, goal.currency)}</span>
+                                                                <span className="money-value money-value-truncate max-w-[48%] text-right">{formatMoney(goal.targetAmount, goal.currency)}</span>
                                                             </div>
                                                         </div>
                                                     </Link>
@@ -400,7 +400,7 @@ export default function Dashboard() {
                                                                     {isOweMe ? 'Вам должны' : 'Вы должны'}
                                                                 </p>
                                                             </div>
-                                                            <span className={`font-semibold text-sm ${isOweMe ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                            <span className={`money-value shrink-0 font-semibold text-sm ${isOweMe ? 'text-emerald-600' : 'text-red-600'}`}>
                                                                 {isOweMe ? '+' : '-'}{formatMoney(remaining, debt.currency || settings?.defaultCurrency)}
                                                             </span>
                                                         </div>
@@ -468,15 +468,15 @@ export default function Dashboard() {
                             {categoryExpenses.length > 0 ? (
                                 <div className="space-y-3">
                                     {categoryExpenses.slice(0, 5).map((cat) => (
-                                        <div key={cat.name} className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
+                                        <div key={cat.name} className="grid min-w-0 gap-1">
+                                            <div className="flex min-w-0 items-center gap-3">
                                                 <div
-                                                    className="w-3 h-3 rounded-full"
+                                                    className="w-3 h-3 shrink-0 rounded-full"
                                                     style={{ backgroundColor: cat.color || '#64748b' }}
                                                 />
-                                                <span className="text-sm text-muted-foreground">{cat.name}</span>
+                                                <span className="min-w-0 truncate text-sm text-muted-foreground">{cat.name}</span>
                                             </div>
-                                            <span className="text-sm font-medium text-foreground">
+                                            <span className="money-value money-value-truncate pl-6 text-sm font-medium text-foreground">
                                                 {formatMoney(cat.value, settings?.defaultCurrency || 'USD')}
                                             </span>
                                         </div>
@@ -553,7 +553,7 @@ export default function Dashboard() {
                                                     {acc && <><span>•</span><span>{acc.name}</span></>}
                                                 </div>
                                             </div>
-                                            <span className={`font-semibold text-sm shrink-0 ${txListType === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                                            <span className={`money-value font-semibold text-sm shrink-0 ${txListType === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                                                 {txListType === 'income' ? '+' : '-'}{formatMoney(tx.amount, tx.currency)}
                                             </span>
                                         </div>

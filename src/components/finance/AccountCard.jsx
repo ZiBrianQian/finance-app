@@ -18,29 +18,29 @@ export default function AccountCard({ account, balance, onClick, compact = false
     if (compact) {
         return (
             <div
-                className="flex items-center justify-between p-3 bg-card rounded-xl border border-border hover:border-primary/50 cursor-pointer transition-all"
+                className="flex min-w-0 items-center gap-3 p-3 bg-card rounded-xl border border-border hover:border-primary/50 cursor-pointer transition-all"
                 onClick={onClick}
             >
-                <div className="flex items-center gap-3">
-                    <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: account.color ? `${account.color}15` : 'var(--muted)' }}
-                    >
-                        <Icon className="w-5 h-5" style={{ color: account.color || '#64748b' }} />
+                <div
+                    className="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: account.color ? `${account.color}15` : 'var(--muted)' }}
+                >
+                    <Icon className="w-5 h-5" style={{ color: account.color || '#64748b' }} />
+                </div>
+                <div className="money-fit-container min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                        <p className="min-w-0 font-medium text-foreground truncate">{account.name}</p>
+                        {showPrimary && account.isPrimary && (
+                            <Star className="w-3.5 h-3.5 shrink-0 text-amber-500 fill-amber-500" />
+                        )}
                     </div>
-                    <div>
-                        <div className="flex items-center gap-1.5">
-                            <p className="font-medium text-foreground">{account.name}</p>
-                            {showPrimary && account.isPrimary && (
-                                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                            )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{account.currency}</p>
+                    <div className="mt-1 flex min-w-0 items-baseline justify-between gap-2">
+                        <p className="shrink-0 text-xs text-muted-foreground">{account.currency}</p>
+                        <p className={`money-value money-value-compact money-value-truncate text-right font-semibold ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
+                            {formatMoney(balance, account.currency)}
+                        </p>
                     </div>
                 </div>
-                <p className={`font-semibold ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
-                    {formatMoney(balance, account.currency)}
-                </p>
             </div>
         );
     }
@@ -62,7 +62,7 @@ export default function AccountCard({ account, balance, onClick, compact = false
                 )}
             </div>
             <p className="text-sm text-muted-foreground mb-1">{account.name}</p>
-            <p className={`text-2xl font-bold ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
+            <p className={`money-value money-value-lg max-w-full font-bold ${isNegative ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
                 {formatMoney(balance, account.currency)}
             </p>
         </Card>

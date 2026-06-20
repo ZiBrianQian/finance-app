@@ -86,7 +86,7 @@ export default function TransactionList({
                     <div key={group}>
                         <div className="flex items-center justify-between mb-3 px-1">
                             <h3 className="text-sm font-medium text-muted-foreground">{groupLabel}</h3>
-                            <span className={`text-sm font-medium ${groupTotal >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            <span className={`money-value shrink-0 text-sm font-medium ${groupTotal >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                 {groupTotal > 0 ? '+' : ''}{formatMoney(groupTotal, settings?.defaultCurrency)}
                             </span>
                         </div>
@@ -173,7 +173,7 @@ export default function TransactionList({
                                         </div>
 
                                         <div className="text-right shrink-0">
-                                            <p className={`font-semibold ${tx.type === 'income' ? 'text-green-600 dark:text-green-400' :
+                                            <p className={`money-value font-semibold ${tx.type === 'income' ? 'text-green-600 dark:text-green-400' :
                                                 tx.type === 'expense' ? 'text-red-600 dark:text-red-400' :
                                                     'text-blue-600 dark:text-blue-400'
                                                 }`}>
